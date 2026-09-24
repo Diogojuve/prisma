@@ -12,6 +12,22 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
+  <div id="auth" class="auth-wrap" hidden>
+    <div class="auth-card">
+      <img src="./assets/usmp-logo.png" alt="USMP" class="auth-logo" />
+      <div class="logo" style="font-size:32px;font-weight:900;color:var(--acc2)">PRISM</div>
+      <div class="auth-sub">Red Universitaria · USMP Filial Sur Arequipa</div>
+      <h2>Bienvenido</h2>
+      <p class="mut">Ingresa con tu correo institucional <b>@usmp.pe</b></p>
+      <form id="login-form">
+        <label>Correo institucional<input id="login-email" type="email" placeholder="codigo@usmp.pe" autocomplete="username" required /></label>
+        <label>Contraseña<input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" /></label>
+        <div id="auth-error" class="auth-error" hidden></div>
+        <button class="btn" type="submit" style="width:100%">Ingresar</button>
+      </form>
+      <small class="mut">Solo correos @usmp.pe · Proyecto académico no oficial</small>
+    </div>
+  </div>
   <div id="app">
     <aside class="sidebar">
       <div class="brand">
@@ -34,7 +50,8 @@
       </nav>
       <div class="me">
         <img src="https://i.pravatar.cc/80?img=12" alt="Carlos Ríos" />
-        <div><b>Carlos Ríos</b><small>@carlos.rios · Ing. Sistemas</small></div>
+        <div style="flex:1"><b id="me-name">Carlos Ríos</b><small id="me-mail">@carlos.rios · Ing. Sistemas</small></div>
+        <button class="pill" onclick="logout()" title="Cerrar sesión">⏻</button>
       </div>
     </aside>
 

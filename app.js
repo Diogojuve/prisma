@@ -1,4 +1,29 @@
 const view = document.getElementById('view');
+const authWrap = document.getElementById('auth');
+function getSession(){ try{ return JSON.parse(localStorage.getItem('prism_session')||'null'); }catch{ return null; } }
+function isLogged(){ const s=getSession(); return !!(s && s.email && s.email.toLowerCase().endsWith('@usmp.pe')); }
+function applyAuthUI(){
+  const logged = isLogged();
+  document.body.classList.toggle('logged-out', !logged);
+  if(authWrap) authWrap.hidden = logged;
+  const s = getSession();
+  const mn = document.getElementById('me-name'); if(mn && s) mn.textContent = s.name || 'Estudiante USMP';
+  const mm = document.getElementById('me-mail'); if(mm && s) mm.textContent = s.email;
+}
+window.logout = () => { localStorage.removeItem('prism_session'); location.hash='#/inicio'; applyAuthUI(); render(); };
+document.getElementById('login-form')?.addEventListener('submit', e=>{
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('auth-error');
+  const fail = m => { err.textContent=m; err.hidden=false; };
+  if(!/^[^\s@]+@usmp\.pe$/.test(email)){ fail('Usa tu correo institucional que termine en @usmp.pe (ej: codigo@usmp.pe).'); return; }
+  if(!pass || pass.length<6){ fail('La contraseña debe tener al menos 6 caracteres.'); return; }
+  err.hidden=true;
+  const name = email.split('@')[0].replace(/[._-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  localStorage.setItem('prism_session', JSON.stringify({email, name, ts:Date.now()}));
+  applyAuthUI(); render();
+});
 const state = {
   filter: 'General',
   tab: 'Para ti',
@@ -111,6 +136,8 @@ function layoutPerfil(){
 }
 
 function render(){
+  applyAuthUI();
+  if(!isLogged()){ view.innerHTML=''; return; }
   setActive();
   const h = location.hash || '#/inicio';
   if(h.startsWith('#/chat')) view.innerHTML = layoutChat();
