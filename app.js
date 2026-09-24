@@ -1,7 +1,7 @@
 const view = document.getElementById('view');
 const authWrap = document.getElementById('auth');
 function getSession(){ try{ return JSON.parse(localStorage.getItem('prism_session')||'null'); }catch{ return null; } }
-function isLogged(){ const s=getSession(); return !!(s && s.email && s.email.toLowerCase().endsWith('@usmp.pe')); }
+function isLogged(){ const s=getSession(); return !!(s && s.name && s.email && s.email.toLowerCase().endsWith('@usmp.pe')); }
 function applyAuthUI(){
   const logged = isLogged();
   document.body.classList.toggle('logged-out', !logged);
@@ -13,14 +13,16 @@ function applyAuthUI(){
 window.logout = () => { localStorage.removeItem('prism_session'); location.hash='#/inicio'; applyAuthUI(); render(); };
 document.getElementById('login-form')?.addEventListener('submit', e=>{
   e.preventDefault();
+  const nameInput = document.getElementById('login-name').value.trim();
   const email = document.getElementById('login-email').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
   const err = document.getElementById('auth-error');
   const fail = m => { err.textContent=m; err.hidden=false; };
+  if(!nameInput || nameInput.length<2){ fail('Escribe tu nombre o apodo (mínimo 2 letras).'); return; }
   if(!/^[^\s@]+@usmp\.pe$/.test(email)){ fail('Usa tu correo institucional que termine en @usmp.pe (ej: codigo@usmp.pe).'); return; }
   if(!pass || pass.length<6){ fail('La contraseña debe tener al menos 6 caracteres.'); return; }
   err.hidden=true;
-  const name = email.split('@')[0].replace(/[._-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  const name = nameInput.slice(0,30);
   localStorage.setItem('prism_session', JSON.stringify({email, name, ts:Date.now()}));
   applyAuthUI(); render();
 });
@@ -129,7 +131,8 @@ function layoutNotif(){
 }
 
 function layoutPerfil(){
-  return `<div class="card"><div class="cover"></div><div class="row"><img class="avatar-big" src="https://i.pravatar.cc/120?img=12"/><div><h2 style="margin:0">Carlos Ríos</h2><small style="color:var(--mut)">@carlos.rios</small></div><span style="flex:1"></span><button class="btn">Seguir</button></div>
+  const s = getSession()||{name:'Carlos Ríos', email:'@carlos.rios'};
+  return `<div class="card"><div class="cover"></div><div class="row"><img class="avatar-big" src="https://i.pravatar.cc/120?img=12"/><div><h2 style="margin:0">${s.name}</h2><small style="color:var(--mut)">${s.email}</small></div><span style="flex:1"></span><button class="btn" onclick="logout()">Salir</button></div>
   <p>Estudiante de Ingeniería de Sistemas 💻 · 5° ciclo<br/>Amante del código, la música y el café ☕</p><small style="color:var(--mut)">🏫 USMP Arequipa · 📅 Ingresó en 2022</small>
   <div class="stats"><div><b>127</b><br/><small>Seguidores</small></div><div><b>83</b><br/><small>Siguiendo</small></div><div><b>24</b><br/><small>Posts</small></div></div></div>
   <div class="card" style="margin-top:12px"><b>🎲 Randomly</b><div class="stats"><div><b style="color:var(--green)">4</b><br/><small>Victorias</small></div><div><b style="color:var(--acc2)">1</b><br/><small>Derrotas</small></div><div><b>4</b><br/><small>Racha</small></div></div></div>`;
@@ -155,8 +158,8 @@ window.setCat = c => { state.marketCat=c; render(); };
 window.setNF = f => { state.notifFilter=f; render(); };
 window.readAll = () => { state.notifs.forEach(n=>n.unread=false); render(); };
 window.like = i => { state.posts[i].likes++; render(); };
-window.publish = () => { const el=document.getElementById('composer'); if(!el||!el.value.trim()) return; state.posts.unshift({name:'Carlos Ríos',info:'Ing. Sistemas · ahora',cat:'General',text:el.value,likes:0,comments:0,shares:0}); render(); };
-window.sendChat = () => { const el=document.getElementById('chatinput'); if(!el||!el.value.trim()) return; state.chats.push({u:'Tú',t:el.value,h:'ahora',img:'https://i.pravatar.cc/60?img=12'}); render(); };
+window.publish = () => { const el=document.getElementById('composer'); if(!el||!el.value.trim()) return; const s=getSession()||{name:'Carlos Ríos'}; state.posts.unshift({name:s.name,info:'USMP Arequipa · ahora',cat:'General',text:el.value,likes:0,comments:0,shares:0}); render(); };
+window.sendChat = () => { const el=document.getElementById('chatinput'); if(!el||!el.value.trim()) return; const s=getSession()||{name:'Tú'}; state.chats.push({u:s.name,t:el.value,h:'ahora',img:'https://i.pravatar.cc/60?img=12'}); render(); };
 window.searchM = q => { const g=document.getElementById('mgrid'); if(!g) return; const f=state.products.filter(p=>p.n.toLowerCase().includes(q.toLowerCase())); g.innerHTML=f.map(p=>`<div class="card prod"><img loading="lazy" src="${p.img}"/><div class="p"><div class="price">${p.p}</div><b>${p.n}</b><div style="color:var(--mut);font-size:12px">${p.u}</div></div></div>`).join(''); };
 window.findRandom = () => { const m=document.getElementById('rmsg'); if(m) m.textContent='Buscando rival en USMP Arequipa... 🎲'; setTimeout(()=>{ if(document.getElementById('rmsg')) document.getElementById('rmsg').textContent='¡Rival encontrado! Tienes 2:00 para responder ⏱'; },1200); };
 
