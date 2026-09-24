@@ -62,9 +62,9 @@ document.getElementById('login-form')?.addEventListener('submit', e=>{
   try{ localStorage.setItem(SESSION_KEY, JSON.stringify({email, name, ts:Date.now()})); }
   catch{ fail('Tu navegador bloqueó el almacenamiento. Activa localStorage e intenta de nuevo.'); return; }
   sessionStorage.setItem('prism_hello', isNew ? 'created' : 'welcome');
-  authMsg(isNew ? `✅ Cuenta creada con éxito. ¡Bienvenido, ${name}! Entrando...` : `✅ Ingreso exitoso. ¡Hola, ${name}! Entrando...`, '');
   e.target.reset();
-  setTimeout(()=>{ applyAuthUI(); location.hash='#/inicio'; render(); toast(isNew ? `✅ Cuenta creada con éxito. ¡Bienvenido, ${name}!` : `👋 ¡Hola de nuevo, ${name}!`, false); }, 600);
+  applyAuthUI(); location.hash='#/inicio'; render();
+  toast(isNew ? `✅ Cuenta creada con éxito. ¡Bienvenido, ${name}!` : `👋 ¡Hola de nuevo, ${name}!`, false);
 });
 const state = {
   filter: 'General',
