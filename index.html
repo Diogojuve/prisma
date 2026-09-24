@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PRISM — Red Universitaria USMP Arequipa</title>
+  <meta name="description" content="PRISM — Red Universitaria de la Universidad San Martín de Porres, Arequipa Perú. Feed, Chat, Randomly, Market, Notificaciones y Perfil." />
+  <meta name="theme-color" content="#160609" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">PRISM</div>
+        <div class="sub">Red Universitaria</div>
+        <div class="uni">USMP · Arequipa, Perú</div>
+      </div>
+      <nav class="nav" id="nav">
+        <a href="#/inicio" data-route="inicio">🏠 <span>Inicio</span></a>
+        <a href="#/chat" data-route="chat">💬 <span>Chat</span></a>
+        <a href="#/randomly" data-route="randomly">🎲 <span>Randomly</span></a>
+        <a href="#/market" data-route="market">🛒 <span>Market</span></a>
+        <a href="#/notif" data-route="notif">🔔 <span>Notif.</span> <b class="badge" id="nav-badge">3</b></a>
+        <a href="#/perfil" data-route="perfil">👤 <span>Perfil</span></a>
+      </nav>
+      <div class="me">
+        <img src="https://i.pravatar.cc/80?img=12" alt="Carlos Ríos" />
+        <div><b>Carlos Ríos</b><small>@carlos.rios · Ing. Sistemas</small></div>
+      </div>
+    </aside>
+
+    <main class="main" id="view"></main>
+  </div>
+
+  <nav class="tabbar" id="tabbar">
+    <a href="#/inicio" data-route="inicio">🏠</a>
+    <a href="#/chat" data-route="chat">💬</a>
+    <a href="#/randomly" data-route="randomly">🎲</a>
+    <a href="#/market" data-route="market">🛒</a>
+    <a href="#/notif" data-route="notif">🔔</a>
+    <a href="#/perfil" data-route="perfil">👤</a>
+  </nav>
+
+  <script src="./app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+    }
+  </script>
+</body>
+</html>
