@@ -6,6 +6,10 @@
   <title>PRISM — Red Universitaria USMP Arequipa</title>
   <meta name="description" content="PRISM — Red Universitaria de la Universidad San Martín de Porres, Arequipa Perú. Feed, Chat, Randomly, Market, Notificaciones y Perfil." />
   <meta name="theme-color" content="#160609" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PRISM USMP" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
@@ -55,6 +59,10 @@
     </aside>
 
     <main class="main" id="view-wrap">
+      <header class="mobilebar">
+        <img src="./assets/usmp-logo.png" alt="USMP" />
+        <b>PRISM</b><small>USMP Arequipa</small>
+      </header>
       <div class="usmp-banner">
         <img src="./assets/usmp-logo.png" alt="Logo USMP" />
         <div><b>Universidad San Martín de Porres — Filial Sur Arequipa</b><br/><small>PRISM · Red Universitaria · Proyecto académico no oficial</small></div>
@@ -64,12 +72,12 @@
   </div>
 
   <nav class="tabbar" id="tabbar">
-    <a href="#/inicio" data-route="inicio">🏠</a>
-    <a href="#/chat" data-route="chat">💬</a>
-    <a href="#/randomly" data-route="randomly">🎲</a>
-    <a href="#/market" data-route="market">🛒</a>
-    <a href="#/notif" data-route="notif">🔔</a>
-    <a href="#/perfil" data-route="perfil">👤</a>
+    <a href="#/inicio" data-route="inicio">🏠<small>Inicio</small></a>
+    <a href="#/chat" data-route="chat">💬<small>Chat</small></a>
+    <a href="#/randomly" data-route="randomly">🎲<small>Play</small></a>
+    <a href="#/market" data-route="market">🛒<small>Market</small></a>
+    <a href="#/notif" data-route="notif">🔔<small>Notif</small></a>
+    <a href="#/perfil" data-route="perfil">👤<small>Perfil</small></a>
   </nav>
   <div id="toast" class="toast" hidden></div>
 

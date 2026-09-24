@@ -4,7 +4,9 @@
   --green:#22c55e; --radius:16px;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 600px at 30% -10%,#3a0f1e 0%,var(--bg) 55%) fixed,var(--bg);color:var(--txt)}
+html{-webkit-text-size-adjust:100%}
+img{max-width:100%}
+body{margin:0;-webkit-tap-highlight-color:transparent;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 600px at 30% -10%,#3a0f1e 0%,var(--bg) 55%) fixed,var(--bg);color:var(--txt)}
 #app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
 .sidebar{background:rgba(10,3,6,.7);border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px}
 .brand .logo{font-size:28px;font-weight:900;letter-spacing:.5px;color:var(--acc2)}
@@ -81,13 +83,40 @@ body.logged-out #app,body.logged-out #tabbar{display:none}
 .toast.err{background:linear-gradient(90deg,var(--acc),#b01116)}
 @keyframes pop{from{transform:translateX(-50%) translateY(-10px) scale(.95);opacity:0}}
 .welcome{background:linear-gradient(90deg,rgba(255,46,99,.2),transparent);border:1px solid var(--acc);border-radius:14px;padding:12px 16px;margin-bottom:14px}
+.mobilebar{display:none}
 @media(max-width:900px){
   #app{grid-template-columns:1fr}
   .sidebar{display:none}
+  .mobilebar{display:flex;align-items:center;gap:8px;background:rgba(13,4,7,.9);border:1px solid var(--line);border-radius:14px;padding:8px 12px;margin-bottom:12px;position:sticky;top:8px;z-index:20;backdrop-filter:blur(8px)}
+  .mobilebar img{width:30px;height:34px;object-fit:contain;background:#fff;border-radius:8px;padding:2px}
+  .mobilebar b{color:var(--acc2);font-size:18px}
+  .mobilebar small{color:var(--mut);font-size:11px}
+  .main{padding:12px 12px calc(92px + env(safe-area-inset-bottom));max-width:100%}
   .grid-3{grid-template-columns:1fr}
   .right{display:none}
-  .market-grid{grid-template-columns:1fr 1fr}
-  .tabbar{display:grid;grid-template-columns:repeat(6,1fr);position:fixed;bottom:0;left:0;right:0;background:#0d0407;border-top:1px solid var(--line);padding:10px}
-  .tabbar a{text-align:center;text-decoration:none;font-size:20px}
-  .main{padding-bottom:80px}
+  .card{padding:14px;border-radius:14px}
+  .usmp-banner{padding:10px;font-size:13px}
+  .usmp-banner img{width:36px;height:42px}
+  .stories{gap:10px;padding-bottom:4px;scroll-snap-type:x mandatory}
+  .story{scroll-snap-align:start}
+  .row{flex-wrap:wrap}
+  .composer .btn{width:100%;padding:12px}
+  .pill,.btn,.tabs button{min-height:44px}
+  .auth-card input,.composer input,input.search{font-size:16px}
+  .bubble{max-width:88%;font-size:15px}
+  .market-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .prod img{height:130px}
+  .price{font-size:17px}
+  .cover{height:110px}
+  .toast{top:calc(10px + env(safe-area-inset-top));max-width:92vw;font-size:14px;white-space:normal;text-align:center}
+  .auth-wrap{padding:16px;min-height:100dvh}
+  .auth-card{padding:22px;max-width:100%}
+  .tabbar{display:grid;grid-template-columns:repeat(6,1fr);position:fixed;bottom:0;left:0;right:0;background:rgba(13,4,7,.96);border-top:1px solid var(--line);padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:50;backdrop-filter:blur(10px)}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;font-size:20px;color:var(--mut);padding:6px 2px;min-height:52px;justify-content:center}
+  .tabbar a small{font-size:10px}
+  .tabbar a.active{color:var(--acc2)}
+}
+@media(max-width:380px){
+  .market-grid{grid-template-columns:1fr}
+  .main{padding:10px 10px calc(92px + env(safe-area-inset-bottom))}
 }
