@@ -15,7 +15,13 @@ function applyAuthUI(){
   const mn = document.getElementById('me-name'); if(mn) mn.textContent = (s && s.name) || 'Sin sesión';
   const mm = document.getElementById('me-mail'); if(mm) mm.textContent = (s && s.email) || 'Inicia sesión @usmp.pe';
 }
-window.logout = () => { try{localStorage.removeItem(SESSION_KEY);}catch{} location.hash='#/inicio'; applyAuthUI(); render(); };
+window.logout = () => { try{localStorage.removeItem(SESSION_KEY);}catch{} sessionStorage.removeItem('prism_hello'); location.hash='#/inicio'; applyAuthUI(); render(); toast('Sesión cerrada. ¡Nos vemos! 👋'); };
+let toastTimer=null;
+function toast(msg, isErr=false){
+  const t=document.getElementById('toast'); if(!t) return;
+  t.textContent=msg; t.classList.toggle('err', !!isErr); t.hidden=false;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true, 3200);
+}
 let authMode = 'login';
 window.setAuthMode = m => {
   authMode = m;
@@ -47,8 +53,12 @@ document.getElementById('login-form')?.addEventListener('submit', e=>{
     err.hidden=true;
   }
   const name = (users[email] && users[email].name) || nameInput.slice(0,30);
+  const isNew = authMode==='register';
   localStorage.setItem(SESSION_KEY, JSON.stringify({email, name, ts:Date.now()}));
-  applyAuthUI(); render();
+  sessionStorage.setItem('prism_hello', isNew ? 'created' : 'welcome');
+  e.target.reset();
+  applyAuthUI(); location.hash='#/inicio'; render();
+  toast(isNew ? `✅ Cuenta creada con éxito. ¡Bienvenido, ${name}!` : `👋 ¡Hola de nuevo, ${name}!`, false);
 });
 const state = {
   filter: 'General',
@@ -97,13 +107,19 @@ function setActive(){
 function layoutInicio(){
   const cats = ['General','Académico','Eventos','Confesiones','Marketplace'];
   const posts = state.posts.filter(p=>state.filter==='General'?true:p.cat===state.filter || state.filter==='General');
-  return `<div class="grid-3"><div>
+  const s = getSession()||{};
+  const hello = sessionStorage.getItem('prism_hello');
+  if(hello) sessionStorage.removeItem('prism_hello');
+  const banner = hello==='created'
+    ? `<div class="welcome">✅ <b>Cuenta creada con éxito.</b> ¡Bienvenido, ${s.name}! Ya puedes publicar, chatear y vender en PRISM.</div>`
+    : hello==='welcome' ? `<div class="welcome">👋 <b>Hola de nuevo, ${s.name}.</b> ¡Qué bueno verte por el campus!</div>` : '';
+  return `${banner}<div class="grid-3"><div>
     <div class="card"><div class="stories">
       <div class="story add"><div>+</div>Tu historia</div>
       ${['María-47','José-53','Ana-44','Luis-59'].map(s=>{const[n,i]=s.split('-');return `<div class="story"><img src="https://i.pravatar.cc/80?img=${i}"/>${n}</div>`}).join('')}
     </div></div>
     <div class="card composer" style="margin-top:14px">
-      <div class="row"><img src="https://i.pravatar.cc/60?img=12" style="width:40px;border-radius:50%"/><input id="composer" placeholder="¿Qué está pasando en el campus?" /></div>
+      <div class="row"><img src="https://i.pravatar.cc/60?img=12" style="width:40px;border-radius:50%"/><input id="composer" placeholder="Hola ${s.name||''}, ¿qué está pasando en el campus?" /></div>
       <div class="row" style="margin-top:10px"><button class="pill">📷 Foto</button><button class="pill">🎥 Video</button><button class="pill">😀 GIF</button><span style="flex:1"></span><button class="btn" onclick="publish()">Publicar</button></div>
     </div>
     <div class="tabs" style="margin-top:14px"><button class="${state.tab==='Para ti'?'active':''}" onclick="setTab('Para ti')">Para ti</button><button class="${state.tab==='Siguiendo'?'active':''}" onclick="setTab('Siguiendo')">Siguiendo</button></div>
@@ -182,7 +198,7 @@ window.setCat = c => { state.marketCat=c; render(); };
 window.setNF = f => { state.notifFilter=f; render(); };
 window.readAll = () => { state.notifs.forEach(n=>n.unread=false); render(); };
 window.like = i => { state.posts[i].likes++; render(); };
-window.publish = () => { const el=document.getElementById('composer'); if(!el||!el.value.trim()) return; const s=getSession()||{name:'Carlos Ríos'}; state.posts.unshift({name:s.name,info:'USMP Arequipa · ahora',cat:'General',text:el.value,likes:0,comments:0,shares:0}); render(); };
+window.publish = () => { const el=document.getElementById('composer'); if(!el||!el.value.trim()) return; const s=getSession()||{name:'Estudiante'}; state.posts.unshift({name:s.name,info:'USMP Arequipa · ahora',cat:'General',text:el.value,likes:0,comments:0,shares:0}); render(); toast(`✅ Publicado como ${s.name}`, false); };
 window.sendChat = () => { const el=document.getElementById('chatinput'); if(!el||!el.value.trim()) return; const s=getSession()||{name:'Tú'}; state.chats.push({u:s.name,t:el.value,h:'ahora',img:'https://i.pravatar.cc/60?img=12'}); render(); };
 window.searchM = q => { const g=document.getElementById('mgrid'); if(!g) return; const f=state.products.filter(p=>p.n.toLowerCase().includes(q.toLowerCase())); g.innerHTML=f.map(p=>`<div class="card prod"><img loading="lazy" src="${p.img}"/><div class="p"><div class="price">${p.p}</div><b>${p.n}</b><div style="color:var(--mut);font-size:12px">${p.u}</div></div></div>`).join(''); };
 window.findRandom = () => { const m=document.getElementById('rmsg'); if(m) m.textContent='Buscando rival en USMP Arequipa... 🎲'; setTimeout(()=>{ if(document.getElementById('rmsg')) document.getElementById('rmsg').textContent='¡Rival encontrado! Tienes 2:00 para responder ⏱'; },1200); };
