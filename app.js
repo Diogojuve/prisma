@@ -29,36 +29,42 @@ window.setAuthMode = m => {
   document.getElementById('login-name-wrap').style.display = m==='register' ? '' : 'none';
   document.getElementById('auth-go').textContent = m==='register' ? 'Crear cuenta' : 'Ingresar';
   document.getElementById('auth-error').hidden = true;
+  const ok=document.getElementById('auth-ok'); if(ok) ok.hidden=true;
 };
+function authMsg(okMsg, errMsg){
+  const err=document.getElementById('auth-error'), ok=document.getElementById('auth-ok');
+  if(errMsg){ err.textContent=errMsg; err.hidden=false; } else err.hidden=true;
+  if(okMsg){ ok.textContent=okMsg; ok.hidden=false; } else if(ok) ok.hidden=true;
+}
 document.getElementById('login-form')?.addEventListener('submit', e=>{
   e.preventDefault();
   const nameInput = document.getElementById('login-name').value.trim();
   const email = document.getElementById('login-email').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
-  const err = document.getElementById('auth-error');
-  const fail = m => { err.textContent=m; err.hidden=false; };
+  const fail = m => authMsg('', m);
+  if(!email){ fail('Escribe tu correo institucional (ej: codigo@usmp.pe).'); return; }
   if(!/^[^\s@]+@usmp\.pe$/.test(email)){ fail('Usa tu correo institucional que termine en @usmp.pe (ej: codigo@usmp.pe).'); return; }
-  if(!pass || pass.length<6){ fail('La contraseña debe tener al menos 6 caracteres.'); return; }
+  if(!pass){ fail('Escribe tu contraseña.'); return; }
+  if(pass.length<6){ fail('La contraseña debe tener al menos 6 caracteres.'); return; }
   const users = getUsers();
   if(authMode==='register'){
     if(!nameInput || nameInput.length<2){ fail('Escribe tu nombre o apodo (mínimo 2 letras).'); return; }
     if(users[email]){ fail('Ese correo ya tiene cuenta. Cambia a "Ingresar" o usa otro correo.'); return; }
     users[email] = {name:nameInput.slice(0,30), pass, ts:Date.now()};
     saveUsers(users);
-    err.hidden=true;
   } else {
     const u = users[email];
     if(!u){ fail('No existe cuenta con ese correo. Cambia a "Crear cuenta" para registrarte.'); return; }
-    if(u.pass !== pass){ fail('Contraseña incorrecta.'); return; }
-    err.hidden=true;
+    if(u.pass !== pass){ fail('Contraseña incorrecta. Revisa mayúsculas o crea otra cuenta.'); return; }
   }
-  const name = (users[email] && users[email].name) || nameInput.slice(0,30);
+  const name = (users[email] && users[email].name) || nameInput.slice(0,30) || email.split('@')[0];
   const isNew = authMode==='register';
-  localStorage.setItem(SESSION_KEY, JSON.stringify({email, name, ts:Date.now()}));
+  try{ localStorage.setItem(SESSION_KEY, JSON.stringify({email, name, ts:Date.now()})); }
+  catch{ fail('Tu navegador bloqueó el almacenamiento. Activa localStorage e intenta de nuevo.'); return; }
   sessionStorage.setItem('prism_hello', isNew ? 'created' : 'welcome');
+  authMsg(isNew ? `✅ Cuenta creada con éxito. ¡Bienvenido, ${name}! Entrando...` : `✅ Ingreso exitoso. ¡Hola, ${name}! Entrando...`, '');
   e.target.reset();
-  applyAuthUI(); location.hash='#/inicio'; render();
-  toast(isNew ? `✅ Cuenta creada con éxito. ¡Bienvenido, ${name}!` : `👋 ¡Hola de nuevo, ${name}!`, false);
+  setTimeout(()=>{ applyAuthUI(); location.hash='#/inicio'; render(); toast(isNew ? `✅ Cuenta creada con éxito. ¡Bienvenido, ${name}!` : `👋 ¡Hola de nuevo, ${name}!`, false); }, 600);
 });
 const state = {
   filter: 'General',

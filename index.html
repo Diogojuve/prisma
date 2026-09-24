@@ -20,11 +20,12 @@
       <h2>Bienvenido</h2>
       <p class="mut">Ingresa con tu correo institucional <b>@usmp.pe</b></p>
       <div class="tabs"><button type="button" class="auth-tab active" data-mode="login" onclick="setAuthMode('login')">Ingresar</button><button type="button" class="auth-tab" data-mode="register" onclick="setAuthMode('register')">Crear cuenta</button></div>
-      <form id="login-form">
-        <label id="login-name-wrap" style="display:none">Nombre o apodo<input id="login-name" type="text" placeholder="Ej: Carlos R. / capi_arequipa" autocomplete="nickname" minlength="2" maxlength="30" /></label>
-        <label>Correo institucional<input id="login-email" type="email" placeholder="codigo@usmp.pe" autocomplete="username" required /></label>
-        <label>Contraseña<input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" /></label>
+      <form id="login-form" novalidate>
+        <label id="login-name-wrap" style="display:none">Nombre o apodo<input id="login-name" type="text" placeholder="Ej: Carlos R. / capi_arequipa" autocomplete="nickname" maxlength="30" /></label>
+        <label>Correo institucional<input id="login-email" type="email" placeholder="codigo@usmp.pe" autocomplete="username" maxlength="80" /></label>
+        <label>Contraseña<input id="login-pass" type="password" placeholder="•••••••• (mín. 6)" autocomplete="current-password" maxlength="100" /></label>
         <div id="auth-error" class="auth-error" hidden></div>
+        <div id="auth-ok" class="auth-ok" hidden></div>
         <button id="auth-go" class="btn" type="submit" style="width:100%">Ingresar</button>
         <button type="button" class="pill" onclick="logout()" style="width:100%">Cerrar / cambiar de cuenta</button>
       </form>
