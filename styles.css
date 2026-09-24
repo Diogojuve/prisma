@@ -9,7 +9,13 @@ body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;backg
 .sidebar{background:rgba(10,3,6,.7);border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px}
 .brand .logo{font-size:28px;font-weight:900;letter-spacing:.5px;color:var(--acc2)}
 .brand .sub{font-size:12px;color:var(--mut)}
-.brand .uni{font-size:11px;color:var(--mut);margin-top:4px}
+.brand .uni{font-size:11px;color:var(--mut);margin-top:6px}
+.brand-row{display:flex;gap:10px;align-items:center}
+.usmp-logo{width:52px;height:60px;object-fit:contain;background:#fff;border-radius:10px;padding:4px}
+.usmp-banner{display:flex;gap:12px;align-items:center;background:#fff;color:#111;border-radius:14px;padding:10px 14px;margin-bottom:14px}
+.usmp-banner img{width:48px;height:56px;object-fit:contain}
+.usmp-banner b{color:#b01116}
+.usmp-banner small{color:#444}
 .nav{display:flex;flex-direction:column;gap:6px}
 .nav a{color:var(--txt);text-decoration:none;padding:10px 12px;border-radius:12px;display:flex;align-items:center;gap:10px}
 .nav a.active{background:rgba(255,46,99,.15);color:var(--acc2)}

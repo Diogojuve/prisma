@@ -15,9 +15,14 @@
   <div id="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="logo">PRISM</div>
-        <div class="sub">Red Universitaria</div>
-        <div class="uni">USMP · Arequipa, Perú</div>
+        <div class="brand-row">
+          <img src="./assets/usmp-logo.png" alt="USMP - Universidad San Martín de Porres" class="usmp-logo" />
+          <div>
+            <div class="logo">PRISM</div>
+            <div class="sub">Red Universitaria</div>
+          </div>
+        </div>
+        <div class="uni">USMP Filial Sur · Arequipa, Perú</div>
       </div>
       <nav class="nav" id="nav">
         <a href="#/inicio" data-route="inicio">🏠 <span>Inicio</span></a>
@@ -33,7 +38,13 @@
       </div>
     </aside>
 
-    <main class="main" id="view"></main>
+    <main class="main" id="view-wrap">
+      <div class="usmp-banner">
+        <img src="./assets/usmp-logo.png" alt="Logo USMP" />
+        <div><b>Universidad San Martín de Porres — Filial Sur Arequipa</b><br/><small>PRISM · Red Universitaria · Proyecto académico no oficial</small></div>
+      </div>
+      <div id="view"></div>
+    </main>
   </div>
 
   <nav class="tabbar" id="tabbar">

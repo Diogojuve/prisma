@@ -23,3 +23,7 @@ Abrir http://localhost:8080
 - `#/perfil` Carlos Ríos
 
 Mock data en `app.js`, sin backend.
+
+## Marca USMP
+- Logo en `assets/usmp-logo.png` — Fuente: Wikimedia Commons `File:USMP-2020.png`, autor: Universidad de San Martín de Porres, licencia PD-textlogo (dominio público por umbral de originalidad, ver página del archivo). Marca registrada de la USMP.
+- Proyecto académico no oficial para la Filial Sur Arequipa. Si la universidad lo solicita se retira o reemplaza el logo.
