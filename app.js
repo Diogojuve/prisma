@@ -1,88 +1,39 @@
 const view = document.getElementById('view');
 const authWrap = document.getElementById('auth');
-const SESSION_KEY='prism_session_v2', USERS_KEY='prism_users_v1';
-const APP_V='2026-09-24-fix-login';
+const SESSION_KEY='prism_session_v3';
 // ?reset=1 limpia todo (para probar desde cero)
-try{ if(new URLSearchParams(location.search).get('reset')==='1'){ localStorage.removeItem(SESSION_KEY); localStorage.removeItem(USERS_KEY); localStorage.removeItem('prism_session'); sessionStorage.clear(); } }catch{}
-function getUsers(){ try{ return JSON.parse(localStorage.getItem(USERS_KEY)||'{}'); }catch{ return {}; } }
-function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
-// Limpia sesión demo vieja (v1) para obligar a entrar con cuenta propia
+try{ if(new URLSearchParams(location.search).get('reset')==='1'){ localStorage.removeItem(SESSION_KEY); localStorage.removeItem('prism_session_v2'); localStorage.removeItem('prism_session'); localStorage.removeItem('prism_users_v1'); sessionStorage.clear(); } }catch{}
+// Limpia sesiones demo viejas
 try{ localStorage.removeItem('prism_session'); }catch{}
 function getSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }catch{ return null; } }
-function isLogged(){ const s=getSession(); return !!(s && s.name && s.email && s.email.toLowerCase().endsWith('@usmp.pe')); }
+function isLogged(){ const s=getSession(); return !!(s && s.name && s.name.length>=2); }
 function applyAuthUI(){
   const logged = isLogged();
   document.body.classList.toggle('logged-out', !logged);
   if(authWrap) authWrap.hidden = logged;
   const s = getSession();
   const mn = document.getElementById('me-name'); if(mn) mn.textContent = (s && s.name) || 'Sin sesión';
-  const mm = document.getElementById('me-mail'); if(mm) mm.textContent = (s && s.email) || 'Inicia sesión @usmp.pe';
+  const mm = document.getElementById('me-mail'); if(mm) mm.textContent = (s && ('@'+s.name.toLowerCase().replace(/\s+/g,'.'))) || 'PRISM · USMP';
 }
-window.logout = () => { try{localStorage.removeItem(SESSION_KEY);}catch{} sessionStorage.removeItem('prism_hello'); location.hash='#/inicio'; applyAuthUI(); render(); toast('Sesión cerrada. ¡Nos vemos! 👋'); };
+window.logout = () => { try{localStorage.removeItem(SESSION_KEY);}catch{} try{sessionStorage.removeItem('prism_hello');}catch{} location.hash='#/inicio'; applyAuthUI(); render(); };
 let toastTimer=null;
 function toast(msg, isErr=false){
   const t=document.getElementById('toast'); if(!t) return;
   t.textContent=msg; t.classList.toggle('err', !!isErr); t.hidden=false;
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true, 3200);
 }
-let authMode = 'login';
-window.setAuthMode = m => {
-  authMode = m;
-  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===m));
-  document.getElementById('login-name-wrap').style.display = m==='register' ? '' : 'none';
-  document.getElementById('auth-go').textContent = m==='register' ? 'Crear cuenta' : 'Ingresar';
-  document.getElementById('auth-error').hidden = true;
-  const ok=document.getElementById('auth-ok'); if(ok) ok.hidden=true;
-};
-function authMsg(okMsg, errMsg){
-  const err=document.getElementById('auth-error'), ok=document.getElementById('auth-ok');
-  if(errMsg){ err.textContent=errMsg; err.hidden=false; } else err.hidden=true;
-  if(okMsg){ ok.textContent=okMsg; ok.hidden=false; } else if(ok) ok.hidden=true;
-}
 document.getElementById('login-form')?.addEventListener('submit', e=>{
   e.preventDefault();
-  const nameInput = document.getElementById('login-name').value.trim();
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass = document.getElementById('login-pass').value;
-  const fail = m => authMsg('', m);
-  if(!email){ fail('Escribe tu correo institucional (ej: codigo@usmp.pe).'); return; }
-  if(!/^[^\s@]+@usmp\.pe$/.test(email)){ fail('Usa tu correo institucional que termine en @usmp.pe (ej: codigo@usmp.pe).'); return; }
-  if(!pass){ fail('Escribe tu contraseña.'); return; }
-  if(pass.length<6){ fail('La contraseña debe tener al menos 6 caracteres.'); return; }
-  const users = getUsers();
-  if(authMode==='register'){
-    if(!nameInput || nameInput.length<2){ fail('Escribe tu nombre o apodo (mínimo 2 letras).'); return; }
-    if(users[email]){
-      // Si ya existe y la clave coincide, entra directo en vez de trabarse
-      if(users[email].pass === pass){
-        const name = users[email].name || nameInput.slice(0,30);
-        try{ localStorage.setItem(SESSION_KEY, JSON.stringify({email, name, ts:Date.now()})); }
-        catch{ fail('Tu navegador bloqueó el almacenamiento. Activa localStorage e intenta de nuevo.'); return; }
-        sessionStorage.setItem('prism_hello', 'welcome');
-        e.target.reset();
-        applyAuthUI(); location.hash='#/inicio'; render();
-        toast(`👋 Ya tenías cuenta, entraste directo como ${name}.`, false);
-        return;
-      }
-      fail('Ese correo ya tiene cuenta. Cambia a "Ingresar" con tu contraseña.'); window.setAuthMode('login'); return;
-    }
-    try{
-      users[email] = {name:nameInput.slice(0,30), pass, ts:Date.now()};
-      saveUsers(users);
-    }catch{ fail('No se pudo guardar (almacenamiento bloqueado). Activa localStorage.'); return; }
-  } else {
-    const u = users[email];
-    if(!u){ fail('No existe cuenta con ese correo. Te cambié a "Crear cuenta": pon tu apodo y crea tu cuenta.'); window.setAuthMode('register'); return; }
-    if(u.pass !== pass){ fail('Contraseña incorrecta. Revisa mayúsculas o crea otra cuenta.'); return; }
-  }
-  const name = (users[email] && users[email].name) || nameInput.slice(0,30) || email.split('@')[0];
-  const isNew = authMode==='register';
-  try{ localStorage.setItem(SESSION_KEY, JSON.stringify({email, name, ts:Date.now()})); }
-  catch{ fail('Tu navegador bloqueó el almacenamiento. Activa localStorage e intenta de nuevo.'); return; }
-  sessionStorage.setItem('prism_hello', isNew ? 'created' : 'welcome');
+  const name = document.getElementById('login-name').value.trim().slice(0,30);
+  const err = document.getElementById('auth-error');
+  if(!name || name.length<2){ err.textContent='Escribe tu usuario (mínimo 2 letras).'; err.hidden=false; return; }
+  err.hidden=true;
+  try{ localStorage.setItem(SESSION_KEY, JSON.stringify({name, ts:Date.now()})); }
+  catch{ err.textContent='Tu navegador bloqueó el almacenamiento.'; err.hidden=false; return; }
+  try{ sessionStorage.setItem('prism_hello', 'created'); }catch{}
   e.target.reset();
   applyAuthUI(); location.hash='#/inicio'; render();
-  toast(isNew ? `✅ Cuenta creada con éxito. ¡Bienvenido, ${name}!` : `👋 ¡Hola de nuevo, ${name}!`, false);
+  toast(`✅ ¡Bienvenido, ${name}!`, false);
 });
 const state = {
   filter: 'General',
@@ -195,8 +146,8 @@ function layoutNotif(){
 }
 
 function layoutPerfil(){
-  const s = getSession()||{name:'Carlos Ríos', email:'@carlos.rios'};
-  return `<div class="card"><div class="cover"></div><div class="row"><img class="avatar-big" src="https://i.pravatar.cc/120?img=12"/><div><h2 style="margin:0">${s.name}</h2><small style="color:var(--mut)">${s.email}</small></div><span style="flex:1"></span><button class="btn" onclick="logout()">Salir</button></div>
+  const s = getSession()||{name:'Estudiante'};
+  return `<div class="card"><div class="cover"></div><div class="row"><img class="avatar-big" src="https://i.pravatar.cc/120?img=12"/><div><h2 style="margin:0">${s.name}</h2><small style="color:var(--mut)">@${s.name.toLowerCase().replace(/\s+/g,'.')} · USMP Arequipa</small></div><span style="flex:1"></span><button class="btn" onclick="logout()">Salir</button></div>
   <p>Estudiante de Ingeniería de Sistemas 💻 · 5° ciclo<br/>Amante del código, la música y el café ☕</p><small style="color:var(--mut)">🏫 USMP Arequipa · 📅 Ingresó en 2022</small>
   <div class="stats"><div><b>127</b><br/><small>Seguidores</small></div><div><b>83</b><br/><small>Siguiendo</small></div><div><b>24</b><br/><small>Posts</small></div></div></div>
   <div class="card" style="margin-top:12px"><b>🎲 Randomly</b><div class="stats"><div><b style="color:var(--green)">4</b><br/><small>Victorias</small></div><div><b style="color:var(--acc2)">1</b><br/><small>Derrotas</small></div><div><b>4</b><br/><small>Racha</small></div></div></div>`;
