@@ -1,16 +1,29 @@
 const view = document.getElementById('view');
 const authWrap = document.getElementById('auth');
-function getSession(){ try{ return JSON.parse(localStorage.getItem('prism_session')||'null'); }catch{ return null; } }
+const SESSION_KEY='prism_session_v2', USERS_KEY='prism_users_v1';
+function getUsers(){ try{ return JSON.parse(localStorage.getItem(USERS_KEY)||'{}'); }catch{ return {}; } }
+function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+// Limpia sesión demo vieja (v1) para obligar a entrar con cuenta propia
+try{ localStorage.removeItem('prism_session'); }catch{}
+function getSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }catch{ return null; } }
 function isLogged(){ const s=getSession(); return !!(s && s.name && s.email && s.email.toLowerCase().endsWith('@usmp.pe')); }
 function applyAuthUI(){
   const logged = isLogged();
   document.body.classList.toggle('logged-out', !logged);
   if(authWrap) authWrap.hidden = logged;
   const s = getSession();
-  const mn = document.getElementById('me-name'); if(mn && s) mn.textContent = s.name || 'Estudiante USMP';
-  const mm = document.getElementById('me-mail'); if(mm && s) mm.textContent = s.email;
+  const mn = document.getElementById('me-name'); if(mn) mn.textContent = (s && s.name) || 'Sin sesión';
+  const mm = document.getElementById('me-mail'); if(mm) mm.textContent = (s && s.email) || 'Inicia sesión @usmp.pe';
 }
-window.logout = () => { localStorage.removeItem('prism_session'); location.hash='#/inicio'; applyAuthUI(); render(); };
+window.logout = () => { try{localStorage.removeItem(SESSION_KEY);}catch{} location.hash='#/inicio'; applyAuthUI(); render(); };
+let authMode = 'login';
+window.setAuthMode = m => {
+  authMode = m;
+  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===m));
+  document.getElementById('login-name-wrap').style.display = m==='register' ? '' : 'none';
+  document.getElementById('auth-go').textContent = m==='register' ? 'Crear cuenta' : 'Ingresar';
+  document.getElementById('auth-error').hidden = true;
+};
 document.getElementById('login-form')?.addEventListener('submit', e=>{
   e.preventDefault();
   const nameInput = document.getElementById('login-name').value.trim();
@@ -18,12 +31,23 @@ document.getElementById('login-form')?.addEventListener('submit', e=>{
   const pass = document.getElementById('login-pass').value;
   const err = document.getElementById('auth-error');
   const fail = m => { err.textContent=m; err.hidden=false; };
-  if(!nameInput || nameInput.length<2){ fail('Escribe tu nombre o apodo (mínimo 2 letras).'); return; }
   if(!/^[^\s@]+@usmp\.pe$/.test(email)){ fail('Usa tu correo institucional que termine en @usmp.pe (ej: codigo@usmp.pe).'); return; }
   if(!pass || pass.length<6){ fail('La contraseña debe tener al menos 6 caracteres.'); return; }
-  err.hidden=true;
-  const name = nameInput.slice(0,30);
-  localStorage.setItem('prism_session', JSON.stringify({email, name, ts:Date.now()}));
+  const users = getUsers();
+  if(authMode==='register'){
+    if(!nameInput || nameInput.length<2){ fail('Escribe tu nombre o apodo (mínimo 2 letras).'); return; }
+    if(users[email]){ fail('Ese correo ya tiene cuenta. Cambia a "Ingresar" o usa otro correo.'); return; }
+    users[email] = {name:nameInput.slice(0,30), pass, ts:Date.now()};
+    saveUsers(users);
+    err.hidden=true;
+  } else {
+    const u = users[email];
+    if(!u){ fail('No existe cuenta con ese correo. Cambia a "Crear cuenta" para registrarte.'); return; }
+    if(u.pass !== pass){ fail('Contraseña incorrecta.'); return; }
+    err.hidden=true;
+  }
+  const name = (users[email] && users[email].name) || nameInput.slice(0,30);
+  localStorage.setItem(SESSION_KEY, JSON.stringify({email, name, ts:Date.now()}));
   applyAuthUI(); render();
 });
 const state = {

@@ -19,12 +19,14 @@
       <div class="auth-sub">Red Universitaria · USMP Filial Sur Arequipa</div>
       <h2>Bienvenido</h2>
       <p class="mut">Ingresa con tu correo institucional <b>@usmp.pe</b></p>
+      <div class="tabs"><button type="button" class="auth-tab active" data-mode="login" onclick="setAuthMode('login')">Ingresar</button><button type="button" class="auth-tab" data-mode="register" onclick="setAuthMode('register')">Crear cuenta</button></div>
       <form id="login-form">
-        <label>Nombre o apodo<input id="login-name" type="text" placeholder="Ej: Carlos R. / capi_arequipa" autocomplete="nickname" required minlength="2" maxlength="30" /></label>
+        <label id="login-name-wrap" style="display:none">Nombre o apodo<input id="login-name" type="text" placeholder="Ej: Carlos R. / capi_arequipa" autocomplete="nickname" minlength="2" maxlength="30" /></label>
         <label>Correo institucional<input id="login-email" type="email" placeholder="codigo@usmp.pe" autocomplete="username" required /></label>
         <label>Contraseña<input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" /></label>
         <div id="auth-error" class="auth-error" hidden></div>
-        <button class="btn" type="submit" style="width:100%">Ingresar</button>
+        <button id="auth-go" class="btn" type="submit" style="width:100%">Ingresar</button>
+        <button type="button" class="pill" onclick="logout()" style="width:100%">Cerrar / cambiar de cuenta</button>
       </form>
       <small class="mut">Solo correos @usmp.pe · Proyecto académico no oficial</small>
     </div>
