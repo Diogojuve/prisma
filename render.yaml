@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: prism-usmp
+    runtime: static
+    branch: main
+    buildCommand: echo "sitio estatico, sin build"
+    staticPublishPath: ./
+    headers:
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
