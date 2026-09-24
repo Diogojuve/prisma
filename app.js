@@ -1,6 +1,9 @@
 const view = document.getElementById('view');
 const authWrap = document.getElementById('auth');
 const SESSION_KEY='prism_session_v2', USERS_KEY='prism_users_v1';
+const APP_V='2026-09-24-fix-login';
+// ?reset=1 limpia todo (para probar desde cero)
+try{ if(new URLSearchParams(location.search).get('reset')==='1'){ localStorage.removeItem(SESSION_KEY); localStorage.removeItem(USERS_KEY); localStorage.removeItem('prism_session'); sessionStorage.clear(); } }catch{}
 function getUsers(){ try{ return JSON.parse(localStorage.getItem(USERS_KEY)||'{}'); }catch{ return {}; } }
 function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
 // Limpia sesión demo vieja (v1) para obligar a entrar con cuenta propia
@@ -49,12 +52,27 @@ document.getElementById('login-form')?.addEventListener('submit', e=>{
   const users = getUsers();
   if(authMode==='register'){
     if(!nameInput || nameInput.length<2){ fail('Escribe tu nombre o apodo (mínimo 2 letras).'); return; }
-    if(users[email]){ fail('Ese correo ya tiene cuenta. Cambia a "Ingresar" o usa otro correo.'); return; }
-    users[email] = {name:nameInput.slice(0,30), pass, ts:Date.now()};
-    saveUsers(users);
+    if(users[email]){
+      // Si ya existe y la clave coincide, entra directo en vez de trabarse
+      if(users[email].pass === pass){
+        const name = users[email].name || nameInput.slice(0,30);
+        try{ localStorage.setItem(SESSION_KEY, JSON.stringify({email, name, ts:Date.now()})); }
+        catch{ fail('Tu navegador bloqueó el almacenamiento. Activa localStorage e intenta de nuevo.'); return; }
+        sessionStorage.setItem('prism_hello', 'welcome');
+        e.target.reset();
+        applyAuthUI(); location.hash='#/inicio'; render();
+        toast(`👋 Ya tenías cuenta, entraste directo como ${name}.`, false);
+        return;
+      }
+      fail('Ese correo ya tiene cuenta. Cambia a "Ingresar" con tu contraseña.'); window.setAuthMode('login'); return;
+    }
+    try{
+      users[email] = {name:nameInput.slice(0,30), pass, ts:Date.now()};
+      saveUsers(users);
+    }catch{ fail('No se pudo guardar (almacenamiento bloqueado). Activa localStorage.'); return; }
   } else {
     const u = users[email];
-    if(!u){ fail('No existe cuenta con ese correo. Cambia a "Crear cuenta" para registrarte.'); return; }
+    if(!u){ fail('No existe cuenta con ese correo. Te cambié a "Crear cuenta": pon tu apodo y crea tu cuenta.'); window.setAuthMode('register'); return; }
     if(u.pass !== pass){ fail('Contraseña incorrecta. Revisa mayúsculas o crea otra cuenta.'); return; }
   }
   const name = (users[email] && users[email].name) || nameInput.slice(0,30) || email.split('@')[0];
