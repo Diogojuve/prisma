@@ -1,11 +1,24 @@
 services:
   - type: web
     name: prism-usmp
-    runtime: static
+    runtime: node
+    plan: free
     branch: main
-    buildCommand: echo "sitio estatico, sin build"
-    staticPublishPath: ./
-    headers:
-      - path: /sw.js
-        name: Cache-Control
-        value: no-cache
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20.19.3
+      # SQLite is intentionally temporary for this first version. For durable
+      # data, attach a paid Render Disk at /opt/render/project/src/data and
+      # change this value to /opt/render/project/src/data/prisma.sqlite.
+      - key: DATABASE_PATH
+        value: ./data/prisma.sqlite
+    # Descomenta este bloque en un plan pago para persistir SQLite:
+    # disk:
+    #   name: prism-data
+    #   mountPath: /opt/render/project/src/data
+    #   sizeGB: 1
