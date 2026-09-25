@@ -10,6 +10,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Keep Node on 20.x: better-sqlite3 11.x does not compile on Node 26.
       - key: NODE_VERSION
         value: 20.19.3
       # SQLite is intentionally temporary for this first version. For durable
