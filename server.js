@@ -827,6 +827,10 @@ app.use((req, res, next) => {
 });
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta no encontrada.' }));
+app.get('/sw.js', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(path.join(ROOT, 'sw.js'));
+});
 app.use(express.static(ROOT, { index: 'index.html' }));
 app.get('*', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
 

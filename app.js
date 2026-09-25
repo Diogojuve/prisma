@@ -230,26 +230,39 @@ function isAvailableRoute(route) {
 }
 
 async function request(path, options = {}) {
-  const headers = { ...(options.headers || {}) };
-  let body = options.body;
+  const { timeoutMs = 15000, signal: externalSignal, ...fetchOptions } = options;
+  const headers = { ...(fetchOptions.headers || {}) };
+  let body = fetchOptions.body;
   if (body !== undefined && !(body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(body);
   }
 
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
   let response;
+  let payload;
   try {
     response = await fetch(path, {
-      ...options,
+      ...fetchOptions,
       body,
       headers,
+      signal: externalSignal || controller.signal,
       credentials: 'same-origin',
     });
+    payload = await response.json().catch(() => ({}));
   } catch {
+    if (controller.signal.aborted && !externalSignal?.aborted) {
+      throw new Error('El servidor tardó demasiado en responder. Inténtalo de nuevo.');
+    }
     throw new Error('No se pudo conectar con el servidor. Revisa tu conexión.');
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 
-  const payload = await response.json().catch(() => ({}));
+  if (!response.headers.get('content-type')?.includes('application/json')) {
+    throw new Error('La API no está disponible. Revisa que Render esté ejecutando el servidor Node.');
+  }
   if (!response.ok) {
     if (response.status === 401 && state.user) {
       showAuth('login');
@@ -1159,7 +1172,8 @@ setAuthMode('login');
     const data = await request('/api/me');
     if (data.user) await enterApp(data.user);
     else showAuth('login');
-  } catch {
+  } catch (error) {
     showAuth('login');
+    if (error && error.message) setAuthFeedback(error.message);
   }
 })();

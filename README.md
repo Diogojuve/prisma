@@ -49,9 +49,11 @@ La base de datos se crea automáticamente en `data/prisma.sqlite`. Ese archivo n
 
 `render.yaml` ya configura un web service Node:
 
-1. Crear un Blueprint desde el repositorio de GitHub.
+1. Crear un Blueprint desde el repositorio de GitHub o crear un **Web Service** manualmente. No debe ser un `Static Site`.
 2. Render ejecutará `npm ci --omit=dev` y `npm start`.
-3. El endpoint de salud está en `/api/health`.
+3. El endpoint de salud está en `/api/health` y debe devolver JSON.
+
+Si ya existe un servicio de tipo **Static Site**, Render no lo convierte automáticamente al cambiar `render.yaml`: hay que crear un Web Service nuevo o eliminar el Static Site y crear el servicio usando el repositorio.
 
 SQLite es la opción adecuada para esta etapa de desarrollo, pero el disco de un servicio web gratuito de Render puede ser efímero. Si se necesita conservar datos entre despliegues, se debe montar un Render Disk de pago en `/opt/render/project/src/data` y configurar `DATABASE_PATH=/opt/render/project/src/data/prisma.sqlite`. Cuando el proyecto crezca, la capa de acceso a datos puede migrarse a PostgreSQL sin cambiar la interfaz de la API.
 
