@@ -98,7 +98,119 @@ function toast(msg) {
   toastBox.hidden = false;
   toastTimer = setTimeout(() => { toastBox.hidden = true; }, 3000);
 }
-window.toast = toast;
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ============================================================================
+// WEBSOCKETS EN TIEMPO REAL (SOCKET.IO)
+// ============================================================================
+let socket = null;
+function initWebSocket() {
+  if (typeof io !== 'function') {
+    console.warn('[WebSockets] Socket.io client no disponible.');
+    return;
+  }
+  if (socket && socket.connected) return;
+
+  socket = io({
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+  });
+
+  socket.on('connect', () => {
+    console.log('%c[PRISM WEBSOCKETS] 🟢 Conectado al campus en tiempo real (ID: ' + socket.id + ')', 'color: #00ff88; font-weight: bold;');
+    if (state.user && state.user.name) {
+      socket.emit('user:identify', state.user);
+    }
+    socket.emit('chat:get_history');
+  });
+
+  socket.on('presence:update', (data) => {
+    if (!data) return;
+    const onlineEl = document.getElementById('chat-online-count');
+    if (onlineEl) {
+      onlineEl.textContent = `${data.onlineCount} alumno${data.onlineCount > 1 ? 's' : ''} conectado${data.onlineCount > 1 ? 's' : ''}`;
+    }
+  });
+
+  socket.on('chat:message', (msg) => {
+    const isMe = state.user && (state.user.name === msg.u);
+    const item = {
+      u: msg.u,
+      t: msg.t,
+      h: msg.h || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      img: msg.img || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=70',
+      me: isMe,
+    };
+    state.chats.push(item);
+
+    if (state.activeRoute === 'chat') {
+      const stream = document.getElementById('chat-stream');
+      if (stream) {
+        const bubble = document.createElement('div');
+        bubble.className = `bubble-msg ${isMe ? 'me' : ''}`;
+        bubble.innerHTML = `
+          ${!isMe ? `<div class="bubble-sender">${escapeHtml(item.u)}</div>` : ''}
+          <div>${escapeHtml(item.t)}</div>
+          <div class="bubble-time">${item.h}</div>
+        `;
+        stream.appendChild(bubble);
+        stream.scrollTop = stream.scrollHeight;
+      }
+    } else {
+      if (!isMe) {
+        toast(`💬 ${item.u}: ${item.t.slice(0, 32)}...`);
+      }
+    }
+  });
+
+  socket.on('chat:history', (messages) => {
+    if (Array.isArray(messages) && messages.length > 0) {
+      state.chats = messages.map(m => ({
+        u: m.u,
+        t: m.t,
+        h: m.h,
+        img: m.img,
+        me: state.user && state.user.name === m.u,
+      }));
+      if (state.activeRoute === 'chat') {
+        renderChat();
+      }
+    }
+  });
+
+  socket.on('feed:new_post', (data) => {
+    if (!data || !data.post) return;
+    const author = data.authorName || 'Un estudiante';
+    if (state.user && state.user.name !== author) {
+      toast(`📢 [En vivo] ${author} publicó en el campus`);
+      fetchFeed();
+    }
+  });
+
+  socket.on('feed:post_liked', (data) => {
+    if (!data) return;
+    const p = state.posts.find(item => item.id === data.postId);
+    if (p) {
+      p.likes = data.likes;
+      if (state.activeRoute === 'inicio') renderInicio();
+    }
+  });
+
+  socket.on('feed:post_deleted', (data) => {
+    if (!data) return;
+    state.posts = state.posts.filter(item => item.id !== data.postId);
+    if (state.activeRoute === 'inicio') renderInicio();
+  });
+}
 
 // CONSULTA AL FEED CON REDIS CACHE
 async function fetchFeed() {
@@ -176,6 +288,9 @@ async function initSession() {
 
     // Cargar feed real desde el backend
     await fetchFeed();
+
+    // Inicializar WebSockets para chat y presencia en tiempo real
+    initWebSocket();
   } catch {}
   updateSidebarUser();
   handleNavigation();
@@ -551,7 +666,7 @@ function renderChat() {
       <div class="ui-card" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;">
         <div>
           <h2 style="font-size:20px;font-weight:800;margin:0;">💬 Chat Global USMP</h2>
-          <small style="color:var(--text-muted);"><span class="green-dot"></span> 247 alumnos conectados — Filial Sur Arequipa</small>
+          <small style="color:var(--text-muted);"><span class="green-dot"></span> <span id="chat-online-count">Conectado en vivo</span> — Filial Sur Arequipa</small>
         </div>
         <div style="display:flex;gap:8px;">
           <span class="category-pill is-active">🌍 Global</span>
@@ -562,8 +677,8 @@ function renderChat() {
       <div class="ui-card chat-stream-box" id="chat-stream">
         ${state.chats.map(c => `
           <div class="bubble-msg ${c.me ? 'me' : ''}">
-            ${!c.me ? `<div class="bubble-sender">${c.u}</div>` : ''}
-            <div>${c.t}</div>
+            ${!c.me ? `<div class="bubble-sender">${escapeHtml(c.u)}</div>` : ''}
+            <div>${escapeHtml(c.t)}</div>
             <div class="bubble-time">${c.h}</div>
           </div>
         `).join('')}
@@ -585,13 +700,17 @@ window.sendChat = function() {
   const text = input.value.trim();
   input.value = '';
 
-  state.chats.push({
-    u: state.user.name,
-    t: text,
-    h: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    me: true,
-  });
-  renderChat();
+  if (socket && socket.connected) {
+    socket.emit('chat:send', { text, user: state.user });
+  } else {
+    state.chats.push({
+      u: state.user.name,
+      t: text,
+      h: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      me: true,
+    });
+    renderChat();
+  }
 };
 
 // ==========================================================================

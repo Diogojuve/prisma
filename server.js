@@ -1,5 +1,4 @@
-'use strict';
-
+const http = require('node:http');
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
@@ -7,8 +6,13 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const Database = require('better-sqlite3');
+const { Server: SocketIOServer } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+  cors: { origin: '*' },
+});
 const ROOT = __dirname;
 
 // Cargar variables de entorno locales (.env o .env.mis_servicios)
@@ -121,12 +125,37 @@ db.exec(`
     created_at TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_name TEXT NOT NULL,
+    user_career TEXT NOT NULL DEFAULT 'USMP',
+    user_avatar TEXT,
+    message TEXT NOT NULL,
+    room TEXT NOT NULL DEFAULT 'global',
+    created_at TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
   CREATE INDEX IF NOT EXISTS idx_posts_created ON posts(created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_activities_created ON activities(created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_stories_expiry ON stories(expires_at);
   CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON chat_messages(room, created_at DESC);
 `);
+
+// Siembra inicial de mensajes del chat si está vacío
+const initialChatCount = db.prepare('SELECT COUNT(*) AS c FROM chat_messages').get().c;
+if (initialChatCount === 0) {
+  const insertChat = db.prepare(`
+    INSERT INTO chat_messages (user_name, user_career, user_avatar, message, room, created_at)
+    VALUES (?, ?, ?, ?, 'global', ?)
+  `);
+  insertChat.run('Carlos Ríos', 'Ingeniería de Sistemas', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=70', '¿Alguien está en la biblioteca central?', now());
+  insertChat.run('María Sánchez', 'Medicina', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=70', 'Yo estoy en el 2do piso 👋', now());
+  insertChat.run('Carlos Ríos', 'Ingeniería de Sistemas', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=70', '¿Quedan mesas libres con enchufes?', now());
+  insertChat.run('José Paredes', 'Derecho', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=70', 'Sí, por la sección de revistas hay varios sitios libres 👍', now());
+  insertChat.run('Ana Torres', 'Arquitectura', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=80&q=70', '¡Gracias por el dato! Voy para allá 🏃‍♀️', now());
+}
 
 const POST_CATEGORIES = new Set(['General', 'Académico', 'Comunidad']);
 const ACTIVITY_CATEGORIES = new Set(['Deporte', 'Juego', 'Estudio', 'Transporte', 'Ayuda', 'Otro']);
@@ -499,7 +528,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: blob: https://images.unsplash.com https://*.unsplash.com https://i.pravatar.cc; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: blob: https://images.unsplash.com https://*.unsplash.com https://i.pravatar.cc; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.socket.io; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
   if (IS_PRODUCTION) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
@@ -766,7 +795,11 @@ app.post('/api/posts', requireAuth, postRateLimit, asyncRoute(async (req, res) =
   // Invalida atómicamente la caché del feed en Redis
   await invalidateFeedCache();
 
-  res.status(201).json({ post: serializePost(post) });
+  const serialized = serializePost(post);
+  // Emisión en tiempo real vía WebSocket
+  io.emit('feed:new_post', { post: serialized, authorName: req.user.name });
+
+  res.status(201).json({ post: serialized });
 }));
 
 // HTTP DELETE /api/posts/:id (Tópicos: HTTP DELETE, SQLite WAL, Redis Cache Invalidation)
@@ -779,6 +812,10 @@ app.delete('/api/posts/:id', requireAuth, asyncRoute(async (req, res) => {
 
   db.prepare('DELETE FROM posts WHERE id = ?').run(postId);
   await invalidateFeedCache();
+
+  // Emisión en tiempo real vía WebSocket
+  io.emit('feed:post_deleted', { postId });
+
   res.json({ ok: true, message: 'Publicación eliminada correctamente.' });
 }));
 
@@ -810,6 +847,10 @@ app.post('/api/posts/:id/like', requireAuth, likeRateLimit, asyncRoute(async (re
 
   const post = getPost(postId, req.user.id);
   if (!post) return res.status(404).json({ error: 'La publicación ya no existe.' });
+
+  // Emisión en tiempo real vía WebSocket
+  io.emit('feed:post_liked', { postId, likes: post.likes });
+
   res.json({ post: serializePost(post) });
 }));
 
@@ -1054,10 +1095,90 @@ function runCleanup() {
 runCleanup();
 setInterval(runCleanup, 60 * 60 * 1000).unref();
 
+// ============================================================================
+// WEBSOCKETS (SOCKET.IO) - GESTIÓN DE TIEMPO REAL: CHAT Y PRESENCIA DE ALUMNOS
+// ============================================================================
+const connectedStudents = new Map();
+
+io.on('connection', (socket) => {
+  let student = {
+    id: `estudiante-${socket.id.slice(0, 5)}`,
+    name: 'Estudiante USMP',
+    career: 'Filial Sur',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=70',
+  };
+  connectedStudents.set(socket.id, student);
+
+  function broadcastPresence() {
+    io.emit('presence:update', {
+      onlineCount: Math.max(connectedStudents.size, 1),
+      students: Array.from(connectedStudents.values()).slice(0, 10),
+    });
+  }
+
+  broadcastPresence();
+
+  socket.on('user:identify', (data) => {
+    if (data && data.name) {
+      student = {
+        id: data.id || student.id,
+        name: data.name,
+        career: data.career || 'USMP Arequipa',
+        avatar: data.avatar || student.avatar,
+      };
+      connectedStudents.set(socket.id, student);
+      broadcastPresence();
+    }
+  });
+
+  socket.on('chat:get_history', () => {
+    const history = db.prepare(`
+      SELECT id, user_name AS u, message AS t, user_avatar AS img, created_at,
+             strftime('%H:%M', created_at) AS h
+      FROM chat_messages
+      ORDER BY id DESC
+      LIMIT 40
+    `).all().reverse();
+
+    socket.emit('chat:history', history);
+  });
+
+  socket.on('chat:send', (data) => {
+    const text = cleanText(data && data.text, 500);
+    if (!text) return;
+
+    const senderName = (data.user && data.user.name) || student.name;
+    const senderCareer = (data.user && data.user.career) || student.career;
+    const senderAvatar = (data.user && data.user.avatar) || student.avatar;
+    const createdAt = now();
+    const timeFormatted = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const result = db.prepare(`
+      INSERT INTO chat_messages (user_name, user_career, user_avatar, message, room, created_at)
+      VALUES (?, ?, ?, ?, 'global', ?)
+    `).run(senderName, senderCareer, senderAvatar, text, createdAt);
+
+    const messagePayload = {
+      id: result.lastInsertRowid,
+      u: senderName,
+      t: text,
+      h: timeFormatted,
+      img: senderAvatar,
+    };
+
+    io.emit('chat:message', messagePayload);
+  });
+
+  socket.on('disconnect', () => {
+    connectedStudents.delete(socket.id);
+    broadcastPresence();
+  });
+});
+
 if (require.main === module) {
-  app.listen(PORT, HOST, () => {
-    console.log(`PRISM escuchando en http://${HOST}:${PORT}`);
+  server.listen(PORT, HOST, () => {
+    console.log(`PRISM escuchando en http://${HOST}:${PORT} (WebSockets Socket.io habilitados)`);
   });
 }
 
-module.exports = app;
+module.exports = { app, server, io };
