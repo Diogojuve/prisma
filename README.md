@@ -1,7 +1,5 @@
 # 🔮 PRISM — Red Social Universitaria USMP 
 
-> **Entrega Grupal — Aplicaciones Web & PWA**  
-> **Universidad de San Martín de Porres (USMP)**
 
 [![Render Deploy](https://img.shields.io/badge/Render-Live%20App-00ff88?style=for-the-badge&logo=render&logoColor=white)](https://prismaa.onrender.com/)
 [![Figma Prototype](https://img.shields.io/badge/Figma-Prototipo%201%3A1-F24E1E?style=for-the-badge&logo=figma&logoColor=white)]()
@@ -9,15 +7,15 @@
 
 ---
 
-## 📌 Enlaces Oficiales de Entrega
+##  Enlaces
 
-- 🌐 **RENDER URL (App en vivo):** [https://prismaa.onrender.com/](https://prismaa.onrender.com/)
-- 🎨 **FIGMA URL (Prototipo UI/UX):** []
-- 💻 **CÓDIGO URL (GitHub):** [https://github.com/Diogojuve/prisma](https://github.com/Diogojuve/prisma)
+- **RENDER URL (App en vivo):** [https://prismaa.onrender.com/](https://prismaa.onrender.com/)
+- **FIGMA URL (Prototipo UI/UX):** []
+- **CÓDIGO URL (GitHub):** [https://github.com/Diogojuve/prisma](https://github.com/Diogojuve/prisma)
 
 ---
 
-## 🌿 Flujo de Ramas en GitHub (`Git Flow`)
+##  Flujo de Ramas en GitHub (`Git Flow`)
 
 Para cumplir con la exigencia docente de desarrollo modular por ramas de características, el repositorio cuenta con las siguientes ramas temáticas:
 
