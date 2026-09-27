@@ -79,6 +79,6 @@ Abre tu navegador en `http://localhost:3000`.
 
 ## 👥 Equipo de Desarrollo
 
-- **Proyecto:** PRISM (Plataforma de Red e Interacción Social para la USMP Filial Sur)
-- **Curso:** Desarrollo de Aplicaciones Web / PWA
+- **Proyecto:** PRISM (Plataforma de Red e Interacción Social para la USMP)
+- **Curso:** Programacion I
 - **Sede:** USMP Filial Sur, Arequipa - 2026
