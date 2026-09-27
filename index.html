@@ -107,18 +107,6 @@
           <div><strong>Filial Sur</strong><small>Arequipa, Perú</small></div>
         </div>
 
-        <!-- WIDGET INFRAESTRUCTURA & REDIS EN VIVO -->
-        <div style="margin-top:10px; border:1px solid #eadfe3; border-radius:14px; padding:10px 14px; background:#fff;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <span style="font-size:10px; font-weight:700; color:#8a777f; text-transform:uppercase; letter-spacing:0.04em;">Infraestructura</span>
-            <span style="font-size:10px; font-weight:700; color:#228b62; background:#eaf8f1; padding:2px 6px; border-radius:10px;">🟢 Redis ONLINE</span>
-          </div>
-          <div style="font-size:11px; color:#55464d; line-height:1.5;">
-            <div>Feed Cache: <strong id="redis-badge-status" style="color:#228b62;">HIT</strong></div>
-            <div>Proveedor: <span style="color:#d92f61; font-weight:600;">Upstash Cloud</span></div>
-          </div>
-        </div>
-
         <div class="sidebar-user">
           <div id="sidebar-avatar" class="avatar avatar-small">P</div>
           <div class="sidebar-user-copy"><strong id="sidebar-name">Estudiante</strong><small id="sidebar-career">USMP</small></div>
@@ -180,7 +168,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=30').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=31').then((reg) => {
           reg.update();
         }).catch(() => {});
       });
