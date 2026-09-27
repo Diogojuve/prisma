@@ -12,7 +12,7 @@
 ## 📌 Enlaces Oficiales de Entrega
 
 - 🌐 **RENDER URL (App en vivo):** [https://prisma-1t3k.onrender.com/](https://prisma-1t3k.onrender.com/)
-- 🎨 **FIGMA URL (Prototipo UI/UX):** [https://www.figma.com/make/sbPXuaub3Iglrf9dkF5L84/Dise%C3%B1ar-interfaces-web-PWA?t=6xZtxAAAH5lR2F47-1](https://www.figma.com/make/sbPXuaub3Iglrf9dkF5L84/Dise%C3%B1ar-interfaces-web-PWA?t=6xZtxAAAH5lR2F47-1)
+- 🎨 **FIGMA URL (Prototipo UI/UX):** [https://www.figma.com/make/sbPXuaub3Iglrf9dkF5L84/Dise%C3%B1ar-interfaces-web-PWA?t=6xZtxAAAH5lR2F47-1](https://iframe-rabbit-08877511.figma.site/)
 - 💻 **CÓDIGO URL (GitHub):** [https://github.com/Diogojuve/prisma](https://github.com/Diogojuve/prisma)
 
 ---
