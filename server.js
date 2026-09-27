@@ -10,6 +10,27 @@ const Database = require('better-sqlite3');
 
 const app = express();
 const ROOT = __dirname;
+
+// Cargar variables de entorno locales (.env o .env.mis_servicios)
+function loadLocalEnv(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const content = fs.readFileSync(filePath, 'utf8');
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx !== -1) {
+      const key = trimmed.slice(0, eqIdx).trim();
+      const val = trimmed.slice(eqIdx + 1).trim();
+      if (!process.env[key]) process.env[key] = val;
+    }
+  }
+}
+loadLocalEnv(path.join(ROOT, '.env'));
+loadLocalEnv(path.join(ROOT, '.env.mis_servicios'));
+
+const redis = require('./redis-client');
+
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -452,6 +473,25 @@ function isValidDateOnly(value) {
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }
 
+async function getFeedVersion() {
+  try {
+    const ver = await redis.get('prism:feed:ver');
+    return Number(ver) || 1;
+  } catch {
+    return 1;
+  }
+}
+
+async function invalidateFeedCache() {
+  try {
+    const currentVer = await getFeedVersion();
+    await redis.set('prism:feed:ver', currentVer + 1, 86400);
+  } catch (err) {
+    console.warn('[Redis Invalidate Error]', err.message);
+  }
+}
+
+
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use((req, res, next) => {
@@ -471,9 +511,88 @@ app.use('/api', (req, res, next) => {
 });
 app.use('/api', sameOriginGuard);
 
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'prism', database: 'sqlite' });
+// HTTP HEAD (Tópico HTTP Methods: Metadatos sin cuerpo de respuesta)
+app.head('/api/health', (req, res) => {
+  res.setHeader('X-Service', 'prism-usmp');
+  res.setHeader('X-Database', 'sqlite-wal');
+  res.setHeader('X-Cache-Backend', redis.isConfigured() ? 'Upstash-Redis' : 'Memory-Fallback');
+  res.status(200).end();
 });
+
+// HTTP GET /api/health (Diagnóstico de infraestructura)
+app.get('/api/health', asyncRoute(async (req, res) => {
+  const ping = await redis.ping();
+  res.json({
+    ok: true,
+    service: 'prism',
+    database: 'sqlite-wal',
+    redis: {
+      connected: redis.isConfigured(),
+      provider: ping.provider,
+      latencyMs: ping.latencyMs,
+    },
+  });
+}));
+
+// Tópico View Data: Proporciona metadatos del campus USMP para las vistas de la aplicación
+app.get('/api/view-data', (req, res) => {
+  res.json({
+    campus: 'USMP Filial Sur Arequipa',
+    academicPeriod: '2026-I',
+    platform: 'PRISM Social Campus',
+    version: '1.2.0',
+    serverTime: now(),
+    infrastructure: {
+      database: 'SQLite 3 (WAL mode)',
+      cache: redis.isConfigured() ? 'Upstash Redis Cloud' : 'In-Memory Fallback',
+      pwaReady: true,
+      serviceWorker: true,
+    },
+    faculties: [
+      'Facultad de Ingeniería y Arquitectura',
+      'Facultad de Ciencias de la Comunicación, Turismo y Psicología',
+      'Facultad de Derecho',
+      'Facultad de Ciencias Administrativas y Recursos Humanos',
+      'Facultad de Medicina Humana',
+    ],
+  });
+});
+
+// Tópico Temp Data / Flash Messages (Mensajes temporales de consumo único almacenados en Redis)
+app.post('/api/temp-data', requireAuth, asyncRoute(async (req, res) => {
+  const message = cleanText(req.body && req.body.message, 250);
+  const type = cleanText(req.body && req.body.type, 20) || 'success';
+  if (!message) return validationError(res, 'El mensaje temporal no puede estar vacío.');
+
+  const keyId = req.cookies?.prism_session ? hashToken(req.cookies.prism_session) : String(req.user.id);
+  await redis.setTempData(keyId, { message, type, createdAt: now() }, 60);
+  res.status(201).json({ ok: true, stored: true });
+}));
+
+app.get('/api/temp-data', requireAuth, asyncRoute(async (req, res) => {
+  const keyId = req.cookies?.prism_session ? hashToken(req.cookies.prism_session) : String(req.user.id);
+  const flash = await redis.getTempData(keyId);
+  res.json({ flash: flash || null });
+}));
+
+// Tópico Redis: Estadísticas en vivo y latencia para evaluación docente
+app.get('/api/redis/stats', asyncRoute(async (req, res) => {
+  const ping = await redis.ping();
+  const stats = redis.getStats();
+  const feedVer = await getFeedVersion();
+  res.json({
+    status: ping.ok ? 'ONLINE' : 'FALLBACK',
+    ...stats,
+    ping,
+    currentFeedVersion: feedVer,
+  });
+}));
+
+// Tópico Redis: Vaciado/invalidación forzada de caché para pruebas de HIT/MISS
+app.post('/api/redis/clear', requireAuth, asyncRoute(async (req, res) => {
+  await invalidateFeedCache();
+  res.json({ ok: true, message: 'Caché de Redis invalidado exitosamente.' });
+}));
 
 app.get('/api/me', (req, res) => {
   const user = currentUser(req);
@@ -543,11 +662,26 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/feed', requireAuth, (req, res) => {
+// HTTP GET /api/feed con Cache Aside en Redis (Tópicos: Redis, HTTP GET, Base de Datos SQLite)
+app.get('/api/feed', requireAuth, asyncRoute(async (req, res) => {
   const userId = req.user.id;
   const postLimit = boundedLimit(req.query.posts, 40, 50);
   const storyLimit = boundedLimit(req.query.stories, 20, 30);
   const activityLimit = boundedLimit(req.query.activities, 30, 50);
+
+  const feedVer = await getFeedVersion();
+  const cacheKey = `prism:feed:v${feedVer}:u${userId}:p${postLimit}`;
+
+  // Intento de Cache Aside desde Redis
+  const cachedFeed = await redis.get(cacheKey);
+  if (cachedFeed) {
+    res.setHeader('X-Cache', 'HIT');
+    res.setHeader('X-Cache-Provider', redis.isConfigured() ? 'Upstash-Redis' : 'Memory-Fallback');
+    res.setHeader('X-Feed-Version', String(feedVer));
+    return res.json(cachedFeed);
+  }
+
+  // En caso de MISS: consulta a SQLite WAL
   db.prepare('DELETE FROM stories WHERE expires_at <= ?').run(now());
   const posts = db.prepare(`
     SELECT
@@ -588,15 +722,32 @@ app.get('/api/feed', requireAuth, (req, res) => {
     SELECT COUNT(*) AS count FROM notifications WHERE user_id = ? AND is_read = 0
   `).get(userId).count;
 
-  res.json({
+  const payload = {
     posts: posts.map(serializePost),
     stories: stories.map(serializeStory),
     activities: activities.map(serializeActivity),
     unreadNotifications,
-  });
+  };
+
+  // Guardamos en Redis con TTL de 60 segundos
+  await redis.set(cacheKey, payload, 60);
+
+  res.setHeader('X-Cache', 'MISS');
+  res.setHeader('X-Cache-Provider', 'SQLite-Primary');
+  res.setHeader('X-Feed-Version', String(feedVer));
+  return res.json(payload);
+}));
+
+// HTTP OPTIONS /api/posts (Tópico HTTP Methods: Detección de verbos soportados)
+app.options('/api/posts', (req, res) => {
+  res.setHeader('Allow', 'GET, POST, DELETE, OPTIONS, HEAD');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS, HEAD');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.status(204).end();
 });
 
-app.post('/api/posts', requireAuth, postRateLimit, (req, res) => {
+// HTTP POST /api/posts (Tópicos: HTTP POST, SQLite WAL, Redis Cache Invalidation)
+app.post('/api/posts', requireAuth, postRateLimit, asyncRoute(async (req, res) => {
   const body = cleanText(req.body && req.body.body, 1200);
   const category = POST_CATEGORIES.has(req.body?.category) ? req.body.category : 'General';
   const image = req.body?.image || null;
@@ -611,10 +762,28 @@ app.post('/api/posts', requireAuth, postRateLimit, (req, res) => {
     VALUES (?, ?, ?, ?, ?)
   `).run(req.user.id, body, category, image, now());
   const post = getPost(result.lastInsertRowid, req.user.id);
-  res.status(201).json({ post: serializePost(post) });
-});
 
-app.post('/api/posts/:id/like', requireAuth, likeRateLimit, (req, res) => {
+  // Invalida atómicamente la caché del feed en Redis
+  await invalidateFeedCache();
+
+  res.status(201).json({ post: serializePost(post) });
+}));
+
+// HTTP DELETE /api/posts/:id (Tópicos: HTTP DELETE, SQLite WAL, Redis Cache Invalidation)
+app.delete('/api/posts/:id', requireAuth, asyncRoute(async (req, res) => {
+  const postId = Number(req.params.id);
+  if (!Number.isInteger(postId)) return validationError(res, 'ID de publicación no válido.');
+  const post = db.prepare('SELECT user_id FROM posts WHERE id = ?').get(postId);
+  if (!post) return res.status(404).json({ error: 'La publicación ya no existe.' });
+  if (post.user_id !== req.user.id) return res.status(403).json({ error: 'No tienes permiso para eliminar esta publicación.' });
+
+  db.prepare('DELETE FROM posts WHERE id = ?').run(postId);
+  await invalidateFeedCache();
+  res.json({ ok: true, message: 'Publicación eliminada correctamente.' });
+}));
+
+// HTTP POST /api/posts/:id/like (Tópicos: HTTP POST, SQLite, Redis Invalidation)
+app.post('/api/posts/:id/like', requireAuth, likeRateLimit, asyncRoute(async (req, res) => {
   const postId = Number(req.params.id);
   if (!Number.isInteger(postId)) return validationError(res, 'Publicación no válida.');
   const postOwner = db.prepare('SELECT user_id FROM posts WHERE id = ?').get(postId);
@@ -636,10 +805,13 @@ app.post('/api/posts/:id/like', requireAuth, likeRateLimit, (req, res) => {
     db.prepare('DELETE FROM post_likes WHERE post_id = ? AND user_id = ?').run(postId, req.user.id);
   }
 
+  // Invalida la versión de caché para refrescar contadores de likes
+  await invalidateFeedCache();
+
   const post = getPost(postId, req.user.id);
   if (!post) return res.status(404).json({ error: 'La publicación ya no existe.' });
   res.json({ post: serializePost(post) });
-});
+}));
 
 app.post('/api/activities', requireAuth, activityRateLimit, (req, res) => {
   const title = cleanText(req.body && req.body.title, 120);
@@ -751,11 +923,12 @@ app.post('/api/stories', requireAuth, storyRateLimit, (req, res) => {
   res.status(201).json({ story: serializeStory(story) });
 });
 
-app.delete('/api/stories/:id', requireAuth, (req, res) => {
+app.delete('/api/stories/:id', requireAuth, asyncRoute(async (req, res) => {
   const result = db.prepare('DELETE FROM stories WHERE id = ? AND user_id = ?').run(Number(req.params.id), req.user.id);
   if (!result.changes) return res.status(404).json({ error: 'La historia no existe.' });
+  await invalidateFeedCache();
   res.json({ ok: true });
-});
+}));
 
 app.get('/api/profile', requireAuth, (req, res) => {
   const user = req.user;
@@ -784,6 +957,25 @@ app.get('/api/profile/posts', requireAuth, (req, res) => {
   });
 });
 
+// HTTP PUT /api/profile (Tópico HTTP Methods: Reemplazo completo del recurso perfil)
+app.put('/api/profile', requireAuth, (req, res) => {
+  const name = cleanText(req.body && req.body.name, 80);
+  const career = cleanText(req.body && req.body.career, 100);
+  const avatar = req.body && Object.prototype.hasOwnProperty.call(req.body, 'avatar')
+    ? (req.body.avatar || null)
+    : null;
+
+  if (name.length < 2) return validationError(res, 'El nombre debe tener al menos 2 caracteres.');
+  if (!career) return validationError(res, 'La carrera es obligatoria en reemplazo total (PUT).');
+  if (!isValidImage(avatar)) return validationError(res, 'La foto no es válida o supera 4 MB.');
+
+  db.prepare('UPDATE users SET name = ?, career = ?, avatar = ? WHERE id = ?')
+    .run(name, career, avatar, req.user.id);
+  const user = getUserById(req.user.id);
+  res.json({ user: publicUser(user), method: 'HTTP PUT (Reemplazo total completado)' });
+});
+
+// HTTP PATCH /api/profile (Tópico HTTP Methods: Modificación parcial del recurso perfil)
 app.patch('/api/profile', requireAuth, (req, res) => {
   const name = cleanText(req.body && req.body.name, 80);
   const career = cleanText(req.body && req.body.career, 100) || 'Sin especificar';
@@ -797,7 +989,7 @@ app.patch('/api/profile', requireAuth, (req, res) => {
   db.prepare('UPDATE users SET name = ?, career = ?, avatar = ? WHERE id = ?')
     .run(name, career, avatar, req.user.id);
   const user = getUserById(req.user.id);
-  res.json({ user: publicUser(user) });
+  res.json({ user: publicUser(user), method: 'HTTP PATCH (Modificación parcial completada)' });
 });
 
 app.get('/api/notifications', requireAuth, (req, res) => {
