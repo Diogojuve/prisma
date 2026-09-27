@@ -56,27 +56,17 @@ cd prisma
 npm install
 ```
 
-### 2. Configurar variables de entorno
-Crea un archivo `.env` basado en `.env.example`:
-```env
-PORT=3000
-NODE_ENV=development
-DATABASE_PATH=./data/prisma.sqlite
-UPSTASH_REDIS_REST_URL=https://tu-instancia.upstash.io
-UPSTASH_REDIS_REST_TOKEN=tu_token_aqui
-```
-
-### 3. Sembrar datos iniciales (Usuarios, posts y chat del campus)
+### 2. Sembrar datos iniciales (Usuarios, posts y chat del campus)
 ```bash
 npm run seed
 ```
 
-### 4. Probar WebSockets en tiempo real
+### 3. Probar WebSockets en tiempo real
 ```bash
 npm run test:sockets
 ```
 
-### 5. Iniciar servidor
+### 4. Iniciar servidor local
 ```bash
 npm start
 # o en modo desarrollo:
