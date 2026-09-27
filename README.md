@@ -4,7 +4,7 @@
 > **Universidad de San Martín de Porres (USMP)**
 
 [![Render Deploy](https://img.shields.io/badge/Render-Live%20App-00ff88?style=for-the-badge&logo=render&logoColor=white)](https://prisma-1t3k.onrender.com/)
-[![Figma Prototype](https://img.shields.io/badge/Figma-Prototipo%201%3A1-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/make/sbPXuaub3Iglrf9dkF5L84/Dise%C3%B1ar-interfaces-web-PWA?t=6xZtxAAAH5lR2F47-1)
+[![Figma Prototype](https://img.shields.io/badge/Figma-Prototipo%201%3A1-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://iframe-rabbit-08877511.figma.site/)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Diogojuve%2Fprisma-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Diogojuve/prisma)
 
 ---
