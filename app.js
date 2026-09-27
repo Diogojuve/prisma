@@ -100,6 +100,56 @@ function toast(msg) {
 }
 window.toast = toast;
 
+// CONSULTA AL FEED CON REDIS CACHE
+async function fetchFeed() {
+  const t0 = performance.now();
+  try {
+    const res = await fetch('/api/feed');
+    if (!res.ok) return;
+    const duration = Math.round(performance.now() - t0);
+    const cacheStatus = res.headers.get('x-cache') || 'MISS';
+    const cacheProvider = res.headers.get('x-cache-provider') || 'SQLite';
+    const feedVer = res.headers.get('x-feed-version') || '1';
+
+    // Logging en consola para demostración al docente
+    if (cacheStatus === 'HIT') {
+      console.log(`%c[PRISM REDIS] ⚡ X-Cache: HIT | ${cacheProvider} (${duration}ms) | v${feedVer}`, 'color: #00ff88; font-weight: bold; background: #18050e; padding: 2px 6px; border-radius: 4px;');
+    } else {
+      console.log(`%c[PRISM REDIS] 🔄 X-Cache: MISS | ${cacheProvider} (${duration}ms) -> Guardado en Upstash`, 'color: #ff9900; font-weight: bold; background: #18050e; padding: 2px 6px; border-radius: 4px;');
+    }
+
+    // Actualizar badge de monitoreo en la interfaz
+    const badge = document.getElementById('redis-cache-hits');
+    const latSpan = document.getElementById('redis-latency');
+    if (badge) {
+      badge.textContent = cacheStatus;
+      badge.style.color = cacheStatus === 'HIT' ? '#00ff88' : '#ff9900';
+    }
+    if (latSpan) latSpan.textContent = `${duration}ms`;
+
+    const data = await res.json();
+    if (data && Array.isArray(data.posts) && data.posts.length > 0) {
+      state.posts = data.posts.map(p => ({
+        id: p.id,
+        author: p.author ? p.author.name : 'Estudiante USMP',
+        career: p.author ? `${p.author.career} · hace poco` : 'USMP Filial Sur',
+        avatar: p.author && p.author.avatar ? p.author.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
+        category: p.category || 'General',
+        text: p.body,
+        image: p.image,
+        likes: p.likes || 0,
+        liked: Boolean(p.liked),
+        comments: 0,
+        pins: 0,
+      }));
+      renderInicio();
+    }
+  } catch (err) {
+    console.warn('[Feed Fetch]', err);
+  }
+}
+window.fetchFeed = fetchFeed;
+
 // AUTENTICACIÓN
 async function initSession() {
   try {
@@ -114,6 +164,18 @@ async function initSession() {
       };
       updateSidebarUser();
     }
+
+    // Comprobar si hay Temp Data / Flash messages
+    try {
+      const tempRes = await fetch('/api/temp-data');
+      const tempData = await tempRes.json();
+      if (tempData && tempData.flash) {
+        toast(`✨ ${tempData.flash.message}`);
+      }
+    } catch {}
+
+    // Cargar feed real desde el backend
+    await fetchFeed();
   } catch {}
   updateSidebarUser();
   handleNavigation();
@@ -373,16 +435,32 @@ window.filterByTag = function(tag) {
   renderInicio();
 };
 
-window.toggleLike = function(id) {
+window.toggleLike = async function(id) {
   const p = state.posts.find(item => item.id === id);
   if (!p) return;
   p.liked = !p.liked;
   p.likes += p.liked ? 1 : -1;
   renderInicio();
+
+  try {
+    await fetch(`/api/posts/${id}/like`, { method: 'POST' });
+  } catch {}
 };
 
 window.sharePost = function(author) {
   toast(`📋 Enlace copiado: post de ${author}`);
+};
+
+window.deletePost = async function(id) {
+  if (!confirm('¿Deseas eliminar esta publicación?')) return;
+  try {
+    const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      state.posts = state.posts.filter(p => p.id !== id);
+      toast('🗑️ Publicación eliminada (Caché Redis invalidado)');
+      renderInicio();
+    }
+  } catch {}
 };
 
 window.publishNewPost = async function() {
@@ -394,12 +472,20 @@ window.publishNewPost = async function() {
   const text = input.value.trim();
   const image = state.pendingImage;
 
-  // Intento de guardado en backend real
-  fetch('/api/posts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body: text, category: state.categoryFilter || 'General', image }),
-  }).catch(() => {});
+  try {
+    const res = await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: text, category: state.categoryFilter || 'General', image }),
+    });
+    if (res.ok) {
+      input.value = '';
+      cancelImage();
+      toast('🎉 ¡Publicado con éxito! (Caché invalidado)');
+      await fetchFeed();
+      return;
+    }
+  } catch {}
 
   state.posts.unshift({
     id: Date.now(),
