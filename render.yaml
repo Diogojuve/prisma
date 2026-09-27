@@ -18,6 +18,10 @@ services:
       # change this value to /opt/render/project/src/data/prisma.sqlite.
       - key: DATABASE_PATH
         value: ./data/prisma.sqlite
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
     # Descomenta este bloque en un plan pago para persistir SQLite:
     # disk:
     #   name: prism-data
