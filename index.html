@@ -126,7 +126,25 @@
     </aside>
 
     <!-- COLUMNA 2: CONTENIDO CENTRAL DINÁMICO -->
-    <main class="main-stream" id="main-view"></main>
+    <div class="main-column-wrap">
+      <!-- HEADER MÓVIL SUPERIOR (SOLO VISIBLE EN PANTALLAS PEQUEÑAS) -->
+      <header class="mobile-top-header">
+        <div class="mobile-top-brand" onclick="window.location.hash='#/inicio'">
+          <span class="mobile-logo-text">PRISM</span>
+          <span class="mobile-uni-tag">USMP Arequipa</span>
+        </div>
+        <div class="mobile-top-actions">
+          <a href="#/notif" class="mobile-icon-btn" aria-label="Notificaciones">
+            🔔<span class="mobile-badge-dot"></span>
+          </a>
+          <a href="#/perfil" class="mobile-profile-link" aria-label="Perfil">
+            <img class="mobile-avatar-top" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80" alt="Carlos" />
+          </a>
+        </div>
+      </header>
+
+      <main class="main-stream" id="main-view"></main>
+    </div>
 
     <!-- COLUMNA 3: SIDEBAR DERECHO (CONECTADOS + TENDENCIAS + RANDOMLY) -->
     <aside class="right-sidebar" id="right-sidebar">
@@ -251,5 +269,12 @@
   <input id="story-file-input" type="file" accept="image/*" capture="environment" hidden />
 
   <script src="./app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js?v=12').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

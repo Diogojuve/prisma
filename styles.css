@@ -1017,12 +1017,19 @@ input, select, textarea {
   to { transform: translate(-50%, 0); opacity: 1; }
 }
 
-.mobile-bottom-nav {
+.mobile-top-header {
   display: none;
 }
 
+.main-column-wrap {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 /* ==========================================================================
-   RESPONSIVE DESIGN (< 1080px & < 768px)
+   RESPONSIVE DESIGN & PWA (< 1080px & < 768px)
    ========================================================================== */
 @media (max-width: 1080px) {
   .app-layout {
@@ -1034,9 +1041,14 @@ input, select, textarea {
 }
 
 @media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
   .app-layout {
     grid-template-columns: 1fr;
-    padding: 12px 12px calc(80px + var(--safe-bottom));
+    padding: 10px 12px calc(85px + var(--safe-bottom));
+    gap: 14px;
   }
 
   .left-sidebar {
@@ -1047,6 +1059,79 @@ input, select, textarea {
     display: none;
   }
 
+  /* HEADER SUPERIOR MÓVIL (STICKY) */
+  .mobile-top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(24, 5, 14, 0.94);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 10px 16px;
+    position: sticky;
+    top: 6px;
+    z-index: 80;
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-top-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .mobile-logo-text {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--pink);
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+
+  .mobile-uni-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .mobile-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .mobile-icon-btn {
+    position: relative;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+  }
+
+  .mobile-badge-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: var(--pink);
+    border-radius: 50%;
+    box-shadow: var(--pink-glow);
+  }
+
+  .mobile-avatar-top {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+    border: 2px solid var(--pink);
+    display: block;
+  }
+
+  /* BARRA DE NAVEGACIÓN INFERIOR (TABBAR PWA) */
   .mobile-bottom-nav {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -1054,9 +1139,9 @@ input, select, textarea {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(14, 2, 7, 0.96);
+    background: rgba(14, 2, 7, 0.97);
     border-top: 1px solid var(--card-border);
-    padding: 6px 2px calc(6px + var(--safe-bottom));
+    padding: 6px 2px calc(8px + var(--safe-bottom));
     z-index: 100;
     backdrop-filter: blur(20px);
   }
@@ -1070,6 +1155,7 @@ input, select, textarea {
     color: var(--text-muted);
     font-size: 18px;
     padding: 6px 0;
+    min-height: 48px;
   }
 
   .mobile-nav-link small {
@@ -1081,14 +1167,51 @@ input, select, textarea {
     color: var(--pink);
   }
 
+  .mobile-nav-link.is-active small {
+    font-weight: 800;
+  }
+
+  /* CONTROLES TÁCTILES MÓVILES (PREVENCIÓN ZOOM SAFARI 16px) */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  .composer-bottom-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .composer-bottom-row .btn-pink {
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px;
+  }
+
+  .stories-row {
+    gap: 14px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .story-capsule {
+    scroll-snap-align: start;
+  }
+
+  .ui-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
   .market-catalog-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 12px;
   }
 }
 
 @media (max-width: 420px) {
   .market-catalog-grid {
     grid-template-columns: 1fr;
+  }
+  .app-layout {
+    padding: 8px 8px calc(85px + var(--safe-bottom));
   }
 }
