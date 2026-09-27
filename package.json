@@ -5,18 +5,23 @@
   "description": "Red comunitaria universitaria para la USMP Filial Sur Arequipa.",
   "main": "server.js",
   "engines": {
-    "node": ">=20.19.0 <21"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
     "seed": "node scripts/seed.js",
+    "test:sockets": "node scripts/test-sockets.js",
     "check": "node --check server.js && node --check app.js && node --check sw.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.8.1",
     "cookie-parser": "^1.4.7",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
   }
 }
