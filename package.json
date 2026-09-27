@@ -8,7 +8,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "node scripts/seed.js && node server.js",
+    "start": "node server.js",
     "dev": "node --watch server.js",
     "seed": "node scripts/seed.js",
     "test:sockets": "node scripts/test-sockets.js",

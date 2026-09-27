@@ -179,7 +179,11 @@
   <script src="./app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=11').catch(() => {}));
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js?v=30').then((reg) => {
+          reg.update();
+        }).catch(() => {});
+      });
     }
   </script>
 </body>

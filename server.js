@@ -143,20 +143,6 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON chat_messages(room, created_at DESC);
 `);
 
-// Siembra inicial de mensajes del chat si está vacío
-const initialChatCount = db.prepare('SELECT COUNT(*) AS c FROM chat_messages').get().c;
-if (initialChatCount === 0) {
-  const insertChat = db.prepare(`
-    INSERT INTO chat_messages (user_name, user_career, user_avatar, message, room, created_at)
-    VALUES (?, ?, ?, ?, 'global', ?)
-  `);
-  insertChat.run('Carlos Ríos', 'Ingeniería de Sistemas', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=70', '¿Alguien está en la biblioteca central?', now());
-  insertChat.run('María Sánchez', 'Medicina', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=70', 'Yo estoy en el 2do piso 👋', now());
-  insertChat.run('Carlos Ríos', 'Ingeniería de Sistemas', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=70', '¿Quedan mesas libres con enchufes?', now());
-  insertChat.run('José Paredes', 'Derecho', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=70', 'Sí, por la sección de revistas hay varios sitios libres 👍', now());
-  insertChat.run('Ana Torres', 'Arquitectura', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=80&q=70', '¡Gracias por el dato! Voy para allá 🏃‍♀️', now());
-}
-
 const POST_CATEGORIES = new Set(['General', 'Académico', 'Comunidad']);
 const ACTIVITY_CATEGORIES = new Set(['Deporte', 'Juego', 'Estudio', 'Transporte', 'Ayuda', 'Otro']);
 

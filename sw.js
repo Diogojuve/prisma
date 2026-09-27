@@ -1,4 +1,4 @@
-const CACHE = 'prism-v12';
+const CACHE = 'prism-v30-clean-white';
 const ASSETS = [
   './',
   './index.html',
@@ -11,14 +11,17 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
+  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
-      .then(() => self.clients.claim()),
+      .then(() => self.clients.claim())
   );
 });
 
@@ -26,10 +29,11 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // Never cache account data or API responses.
-  if (url.pathname.startsWith('/api/')) return;
+  // Never cache API responses or socket.io
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) return;
 
-  if (url.origin === location.origin && (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+  // Network-first for html/css/js so new deployments are received immediately
+  if (url.origin === location.origin && (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname === '/')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -37,12 +41,12 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE).then((cache) => cache.put(event.request, copy));
           return response;
         })
-        .catch(() => caches.match(event.request)),
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request).catch(() => caches.match('./index.html'))),
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });
