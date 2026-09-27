@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>PRISM — Red Universitaria</title>
-  <meta name="description" content="PRISM: Red Social Universitaria USMP Filial Sur Arequipa." />
-  <meta name="theme-color" content="#0d0206" />
+  <title>PRISM — Comunidad USMP Arequipa</title>
+  <meta name="description" content="PRISM: comunidad universitaria de la USMP Filial Sur Arequipa. Conecta, participa y organiza actividades con estudiantes." />
+  <meta name="theme-color" content="#f7f4f5" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="PRISM" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
@@ -16,291 +16,170 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <!-- MODAL DE LOGIN / REGISTRO (SI NO HAY SESIÓN) -->
-  <div id="auth-modal" class="auth-modal-overlay" hidden>
-    <div class="auth-card">
-      <div class="auth-brand-head">
-        <h1 class="logo-prism">PRISM</h1>
-        <p class="logo-subtitle">Red Universitaria · USMP Arequipa</p>
-      </div>
-      <div class="auth-tabs">
-        <button id="tab-login" class="auth-tab is-active" type="button" onclick="setAuthMode('login')">Entrar</button>
-        <button id="tab-register" class="auth-tab" type="button" onclick="setAuthMode('register')">Crear cuenta</button>
+  <section id="auth-screen" class="auth-screen" aria-label="Acceso a PRISM">
+    <div class="auth-decoration auth-decoration-one"></div>
+    <div class="auth-decoration auth-decoration-two"></div>
+    <div class="auth-layout">
+      <div class="auth-intro">
+        <div class="brand-mark brand-mark-large">
+          <img src="./assets/usmp-logo.png" alt="USMP" />
+          <span>PRISM</span>
+        </div>
+        <p class="eyebrow">USMP · FILIAL SUR · AREQUIPA</p>
+        <h1>Tu campus, <em>más cerca.</em></h1>
+        <p class="auth-intro-copy">Un espacio para compartir lo que haces, encontrar a tu grupo y convertir ideas en planes con la comunidad.</p>
+        <div class="intro-points">
+          <span>✓ Publica y responde</span>
+          <span>✓ Organiza actividades</span>
+          <span>✓ Conecta con tu carrera</span>
+        </div>
       </div>
 
-      <form id="form-login" onsubmit="handleLogin(event)">
-        <div class="form-group">
-          <label>Correo Universitario</label>
-          <input id="login-email" type="email" placeholder="carlos.rios@usmp.edu.pe" required autocomplete="email" />
+      <div class="auth-card">
+        <div class="auth-card-head">
+          <p class="eyebrow">Comunidad universitaria</p>
+          <h2 id="auth-title">Qué gusto verte</h2>
+          <p id="auth-subtitle" class="muted">Inicia sesión para entrar a PRISM.</p>
         </div>
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input id="login-password" type="password" placeholder="Tu contraseña" required autocomplete="current-password" />
-        </div>
-        <div id="login-error" class="auth-error-msg" hidden></div>
-        <button id="btn-login" class="btn-pink btn-block" type="submit">Entrar al Campus →</button>
-      </form>
 
-      <form id="form-register" hidden onsubmit="handleRegister(event)">
-        <div class="form-group">
-          <label>Nombre y Apellidos</label>
-          <input id="reg-name" type="text" placeholder="Carlos Ríos" required autocomplete="name" />
+        <div class="auth-tabs" role="tablist" aria-label="Acceso a la cuenta">
+          <button class="auth-tab is-active" type="button" data-auth-tab="login" role="tab" aria-selected="true">Entrar</button>
+          <button class="auth-tab" type="button" data-auth-tab="register" role="tab" aria-selected="false">Crear cuenta</button>
         </div>
-        <div class="form-group">
-          <label>Correo Universitario</label>
-          <input id="reg-email" type="email" placeholder="carlos.rios@usmp.edu.pe" required autocomplete="email" />
-        </div>
-        <div class="form-group">
-          <label>Carrera Profesional</label>
-          <select id="reg-career">
-            <option value="Ingeniería de Sistemas">Ingeniería de Sistemas</option>
-            <option value="Derecho">Derecho</option>
-            <option value="Medicina">Medicina</option>
-            <option value="Arquitectura">Arquitectura</option>
-            <option value="Psicología">Psicología</option>
-            <option value="Ciencias de la Comunicación">Ciencias de la Comunicación</option>
-            <option value="Administración">Administración</option>
-            <option value="Contabilidad">Contabilidad</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input id="reg-password" type="password" placeholder="Mínimo 8 caracteres" minlength="8" required autocomplete="new-password" />
-        </div>
-        <div class="form-group">
-          <label>Confirmar Contraseña</label>
-          <input id="reg-confirm" type="password" placeholder="Repite la contraseña" minlength="8" required autocomplete="new-password" />
-        </div>
-        <div id="reg-error" class="auth-error-msg" hidden></div>
-        <button id="btn-register" class="btn-pink btn-block" type="submit">Crear Cuenta →</button>
-      </form>
+
+        <form id="login-form" class="auth-form" novalidate>
+          <label for="login-email">Correo electrónico</label>
+          <input id="login-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="tu.correo@ejemplo.com" required />
+          <label for="login-password">Contraseña</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Tu contraseña" maxlength="128" required />
+          <button class="primary-button full-width" type="submit">Entrar a mi cuenta <span>→</span></button>
+        </form>
+
+        <form id="register-form" class="auth-form" hidden novalidate>
+          <label for="register-name">Nombre para mostrar</label>
+          <input id="register-name" name="name" type="text" autocomplete="name" placeholder="Ej. Ana Paredes" maxlength="80" required />
+          <label for="register-email">Correo electrónico</label>
+          <input id="register-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="tu.correo@ejemplo.com" required />
+          <label for="register-career">Carrera <span class="optional">opcional</span></label>
+          <input id="register-career" name="career" type="text" autocomplete="organization-title" placeholder="Ej. Ingeniería de Sistemas" maxlength="100" />
+          <label for="register-password">Contraseña</label>
+          <input id="register-password" name="password" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" minlength="8" maxlength="128" required />
+          <label for="register-confirm">Repite la contraseña</label>
+          <input id="register-confirm" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Repite tu contraseña" minlength="8" maxlength="128" required />
+          <button class="primary-button full-width" type="submit">Crear mi cuenta <span>→</span></button>
+        </form>
+
+        <div id="auth-feedback" class="form-feedback" role="alert" hidden></div>
+        <p class="auth-note">Por ahora puedes registrar cualquier correo. La validación exclusiva de correos USMP llegará en una próxima actualización.</p>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- APLICACIÓN PRINCIPAL (3 COLUMNAS: EXACTA AL FIGMA) -->
-  <div id="app-container" class="app-layout">
-    <!-- COLUMNA 1: SIDEBAR IZQUIERDO -->
-    <aside class="left-sidebar">
-      <div class="sidebar-header">
-        <h1 class="logo-prism">PRISM</h1>
-        <p class="logo-subtitle">Red Universitaria</p>
+  <div id="app-shell" class="app-shell" hidden>
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="sidebar-brand">
+        <a class="brand-mark" href="#/inicio" aria-label="Ir al inicio">
+          <img src="./assets/usmp-logo.png" alt="USMP" />
+          <span>PRISM</span>
+        </a>
+        <p>Comunidad USMP Arequipa</p>
       </div>
 
-      <nav class="sidebar-menu">
-        <a href="#/inicio" class="menu-item is-active" data-route="inicio">
-          <span class="menu-icon">🏠</span>
-          <span class="menu-text">Inicio</span>
-        </a>
-        <a href="#/chat" class="menu-item" data-route="chat">
-          <span class="menu-icon">💬</span>
-          <span class="menu-text">Chat</span>
-        </a>
-        <a href="#/randomly" class="menu-item" data-route="randomly">
-          <span class="menu-icon">🎲</span>
-          <span class="menu-text">Randomly</span>
-        </a>
-        <a href="#/market" class="menu-item" data-route="market">
-          <span class="menu-icon">🛒</span>
-          <span class="menu-text">Market</span>
-        </a>
-        <a href="#/notif" class="menu-item" data-route="notif">
-          <span class="menu-icon">🔔</span>
-          <span class="menu-text">Notif.</span>
-          <span class="badge-pink" id="badge-notif">3</span>
-        </a>
-        <a href="#/perfil" class="menu-item" data-route="perfil">
-          <span class="menu-icon">👤</span>
-          <span class="menu-text">Perfil</span>
-        </a>
+      <nav class="sidebar-nav">
+        <p class="nav-label">Explorar</p>
+        <button class="nav-item is-active" type="button" data-route="inicio">
+          <span class="nav-icon">⌂</span><span>Inicio</span>
+        </button>
+        <button class="nav-item" type="button" data-route="chat">
+          <span class="nav-icon">💬</span><span>Chat Campus</span>
+        </button>
+        <button class="nav-item is-disabled" type="button" data-soon="Market" aria-disabled="true" title="Market: próximamente">
+          <span class="nav-icon">▣</span><span>Market</span><small>Próximamente</small>
+        </button>
+        <button class="nav-item" type="button" data-route="perfil">
+          <span class="nav-icon">◎</span><span>Perfil</span>
+        </button>
       </nav>
 
-      <!-- TARJETA DE USUARIO INFERIOR -->
-      <div class="sidebar-user-pill" onclick="window.location.hash='#/perfil'">
-        <img id="sidebar-avatar-img" class="user-avatar-circle" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80" alt="Carlos Ríos" />
-        <div class="user-details">
-          <strong id="sidebar-user-name">Carlos Ríos</strong>
-          <small id="sidebar-user-handle">@carlos.rios</small>
+      <div class="sidebar-bottom">
+        <div class="campus-mini">
+          <span class="status-dot"></span>
+          <div><strong>Filial Sur</strong><small>Arequipa, Perú</small></div>
         </div>
-        <button class="settings-gear" type="button" title="Opciones" onclick="event.stopPropagation(); toggleUserMenu()">⚙️</button>
+
+        <!-- WIDGET INFRAESTRUCTURA & REDIS EN VIVO -->
+        <div style="margin-top:10px; border:1px solid #eadfe3; border-radius:14px; padding:10px 14px; background:#fff;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:10px; font-weight:700; color:#8a777f; text-transform:uppercase; letter-spacing:0.04em;">Infraestructura</span>
+            <span style="font-size:10px; font-weight:700; color:#228b62; background:#eaf8f1; padding:2px 6px; border-radius:10px;">🟢 Redis ONLINE</span>
+          </div>
+          <div style="font-size:11px; color:#55464d; line-height:1.5;">
+            <div>Feed Cache: <strong id="redis-badge-status" style="color:#228b62;">HIT</strong></div>
+            <div>Proveedor: <span style="color:#d92f61; font-weight:600;">Upstash Cloud</span></div>
+          </div>
+        </div>
+
+        <div class="sidebar-user">
+          <div id="sidebar-avatar" class="avatar avatar-small">P</div>
+          <div class="sidebar-user-copy"><strong id="sidebar-name">Estudiante</strong><small id="sidebar-career">USMP</small></div>
+          <button class="icon-button" type="button" data-action="logout" title="Cerrar sesión" aria-label="Cerrar sesión">↪</button>
+        </div>
       </div>
     </aside>
 
-    <!-- COLUMNA 2: CONTENIDO CENTRAL DINÁMICO -->
-    <div class="main-column-wrap">
-      <!-- HEADER MÓVIL SUPERIOR (SOLO VISIBLE EN PANTALLAS PEQUEÑAS) -->
-      <header class="mobile-top-header">
-        <div class="mobile-top-brand" onclick="window.location.hash='#/inicio'">
-          <span class="mobile-logo-text">PRISM</span>
-          <span class="mobile-uni-tag">USMP Arequipa</span>
+    <main class="main-content">
+      <header class="topbar">
+        <a class="mobile-brand" href="#/inicio" aria-label="Ir al inicio">
+          <img src="./assets/usmp-logo.png" alt="USMP" /><span>PRISM</span>
+        </a>
+        <div class="topbar-copy">
+          <span class="topbar-kicker">USMP Filial Sur</span>
+          <strong>Comunidad Arequipa</strong>
         </div>
-        <div class="mobile-top-actions">
-          <a href="#/notif" class="mobile-icon-btn" aria-label="Notificaciones">
-            🔔<span class="mobile-badge-dot"></span>
-          </a>
-          <a href="#/perfil" class="mobile-profile-link" aria-label="Perfil">
-            <img class="mobile-avatar-top" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80" alt="Carlos" />
-          </a>
+        <div class="topbar-actions">
+          <button id="notification-toggle" class="icon-button notification-button" type="button" data-action="open-notifications" aria-label="Abrir notificaciones" aria-expanded="false">
+            <span aria-hidden="true">🔔</span>
+            <b id="notification-count" class="notification-count" hidden>0</b>
+          </button>
+          <button class="topbar-profile" type="button" data-route="perfil" aria-label="Abrir perfil">
+            <span id="topbar-avatar" class="avatar avatar-top">P</span>
+            <span class="topbar-profile-name" id="topbar-name">Estudiante</span>
+            <span class="chevron">⌄</span>
+          </button>
         </div>
       </header>
 
-      <main class="main-stream" id="main-view"></main>
-    </div>
+      <div id="page-content" class="page-content" aria-live="polite"></div>
+    </main>
 
-    <!-- COLUMNA 3: SIDEBAR DERECHO (CONECTADOS + TENDENCIAS + RANDOMLY) -->
-    <aside class="right-sidebar" id="right-sidebar">
-      <!-- WIDGET 1: CONECTADOS -->
-      <div class="ui-card">
-        <div class="widget-header">
-          <span class="green-dot"></span>
-          <strong class="widget-title-white">247 conectados</strong>
-        </div>
-        <div class="connected-list">
-          <div class="connected-user">
-            <div class="avatar-wrapper">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=70" alt="María" />
-              <span class="online-indicator"></span>
-            </div>
-            <div>
-              <div class="user-title">María Sánchez</div>
-              <div class="user-sub">Medicina</div>
-            </div>
-          </div>
-          <div class="connected-user">
-            <div class="avatar-wrapper">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=70" alt="José" />
-              <span class="online-indicator"></span>
-            </div>
-            <div>
-              <div class="user-title">José Paredes</div>
-              <div class="user-sub">Derecho</div>
-            </div>
-          </div>
-          <div class="connected-user">
-            <div class="avatar-wrapper">
-              <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=80&q=70" alt="Ana" />
-              <span class="online-indicator"></span>
-            </div>
-            <div>
-              <div class="user-title">Ana Torres</div>
-              <div class="user-sub">Arquitectura</div>
-            </div>
-          </div>
-          <div class="connected-user">
-            <div class="avatar-wrapper">
-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=70" alt="Luis" />
-              <span class="online-indicator"></span>
-            </div>
-            <div>
-              <div class="user-title">Luis Vega</div>
-              <div class="user-sub">Ingeniería Civil</div>
-            </div>
-          </div>
-          <div class="connected-user">
-            <div class="avatar-wrapper">
-              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=70" alt="Sofía" />
-              <span class="online-indicator"></span>
-            </div>
-            <div>
-              <div class="user-title">Sofía Lima</div>
-              <div class="user-sub">Psicología</div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <nav class="mobile-nav" aria-label="Navegación móvil">
+      <button class="mobile-nav-item is-active" type="button" data-route="inicio"><span>⌂</span><small>Inicio</small></button>
+      <button class="mobile-nav-item" type="button" data-route="chat"><span>💬</span><small>Chat</small></button>
+      <button class="mobile-nav-item is-disabled" type="button" data-soon="Market" aria-disabled="true"><span>▣</span><small>Market</small></button>
+      <button class="mobile-nav-item" type="button" data-route="perfil"><span>◎</span><small>Perfil</small></button>
+    </nav>
 
-      <!-- WIDGET 2: TENDENCIAS -->
-      <div class="ui-card">
-        <h3 class="widget-title-white" style="margin-bottom:14px;">Tendencias</h3>
-        <div class="trend-list">
-          <div class="trend-row" onclick="filterByTag('ExamenesFinales')">
-            <span class="trend-hashtag">#ExamenesFinales</span>
-            <span class="trend-posts">142 posts</span>
-          </div>
-          <div class="trend-row" onclick="filterByTag('ProyectoGrupal')">
-            <span class="trend-hashtag">#ProyectoGrupal</span>
-            <span class="trend-posts">89 posts</span>
-          </div>
-          <div class="trend-row" onclick="filterByTag('FeriadoUniversitario')">
-            <span class="trend-hashtag">#FeriadoUniversitario</span>
-            <span class="trend-posts">74 posts</span>
-          </div>
-          <div class="trend-row" onclick="filterByTag('NuevosCursos')">
-            <span class="trend-hashtag">#NuevosCursos</span>
-            <span class="trend-posts">61 posts</span>
-          </div>
-        </div>
+    <aside id="notification-panel" class="notification-panel" hidden aria-label="Notificaciones">
+      <div class="panel-head">
+        <div><p class="eyebrow">Tu campus</p><h2>Notificaciones</h2></div>
+        <button class="icon-button" type="button" data-action="close-notifications" aria-label="Cerrar notificaciones">×</button>
       </div>
-
-      <!-- WIDGET 3: RANDOMLY PROMO BOX -->
-      <div class="randomly-promo-box" onclick="window.location.hash='#/randomly'">
-        <div class="dice-icon-large">🎲</div>
-        <div class="help-btn" onclick="event.stopPropagation(); toast('🎲 Randomly conecta con alguien del campus en un chat de 2 minutos.')">?</div>
-      </div>
-
-      <!-- WIDGET 4: INFRAESTRUCTURA & CACHÉ REDIS (EVALUACIÓN DOCENTE) -->
-      <div class="ui-card" id="redis-monitor-widget" style="margin-top:16px; padding:14px; background:rgba(24,5,14,0.85); border:1px solid rgba(255,46,99,0.25); border-radius:16px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-          <h4 style="font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin:0; font-weight:700;">Infraestructura</h4>
-          <span id="redis-status-badge" style="font-size:10px; padding:3px 8px; border-radius:20px; background:rgba(0,255,136,0.12); color:#00ff88; font-weight:700; border:1px solid rgba(0,255,136,0.3);">🟢 Redis ONLINE</span>
-        </div>
-        <div style="font-size:11px; color:var(--text-secondary); line-height:1.6;">
-          <div style="display:flex; justify-content:space-between;">
-            <span>Feed Cache:</span>
-            <strong id="redis-cache-hits" style="color:#00ff88;">HIT</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span>Latencia:</span>
-            <span id="redis-latency" style="color:var(--text-primary);">0ms</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span>Proveedor:</span>
-            <span style="color:var(--primary);">Upstash Cloud</span>
-          </div>
-        </div>
-        <button type="button" onclick="fetchFeed(); toast('⚡ Feed consultado via Upstash Redis');" style="margin-top:10px; width:100%; padding:6px 0; background:rgba(255,46,99,0.15); border:1px solid rgba(255,46,99,0.4); border-radius:8px; color:#fff; font-size:11px; cursor:pointer; font-weight:600; transition:background 0.2s;">
-          ⚡ Probar Caché / HIT
-        </button>
-      </div>
+      <button class="text-button" type="button" data-action="read-notifications">Marcar todas como leídas</button>
+      <div id="notification-list" class="notification-list"></div>
     </aside>
   </div>
 
-  <!-- NAVEGACIÓN MÓVIL INFERIOR -->
-  <nav class="mobile-bottom-nav">
-    <a href="#/inicio" class="mobile-nav-link is-active" data-route="inicio">
-      <span>🏠</span><small>Inicio</small>
-    </a>
-    <a href="#/chat" class="mobile-nav-link" data-route="chat">
-      <span>💬</span><small>Chat</small>
-    </a>
-    <a href="#/randomly" class="mobile-nav-link" data-route="randomly">
-      <span>🎲</span><small>Randomly</small>
-    </a>
-    <a href="#/market" class="mobile-nav-link" data-route="market">
-      <span>🛒</span><small>Market</small>
-    </a>
-    <a href="#/notif" class="mobile-nav-link" data-route="notif">
-      <span>🔔</span><small>Notif.</small>
-    </a>
-    <a href="#/perfil" class="mobile-nav-link" data-route="perfil">
-      <span>👤</span><small>Perfil</small>
-    </a>
-  </nav>
+  <div id="modal-root"></div>
+  <div id="toast" class="toast" role="status" hidden></div>
 
-  <!-- TOAST NOTIFICATION FLOTANTE -->
-  <div id="toast" class="toast-floating" hidden role="status"></div>
+  <input id="story-camera" class="visually-hidden" type="file" accept="image/*" capture="environment" />
+  <input id="profile-camera" class="visually-hidden" type="file" accept="image/*" capture="user" />
 
-  <!-- INPUT OCULTO PARA SUBIR FOTOS -->
-  <input id="post-file-input" type="file" accept="image/*" hidden />
-  <input id="story-file-input" type="file" accept="image/*" capture="environment" hidden />
-
-  <!-- SOCKET.IO CLIENT (WEBSOCKETS TIEMPO REAL) -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="./app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=12').catch(() => {});
-      });
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js?v=11').catch(() => {}));
     }
   </script>
 </body>
